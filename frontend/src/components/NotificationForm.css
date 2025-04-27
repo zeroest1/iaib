@@ -1,0 +1,89 @@
+.notification-form {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.notification-form h2 {
+  color: #e4067e;
+  text-align: center;
+  margin-bottom: 30px;
+  font-weight: 600;
+  font-size: 24px;
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e4067e;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  font-family: 'Montserrat', sans-serif;
+  background-color: #ffffff;
+  cursor: pointer;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  outline: none;
+  border-color: #c0056a;
+  box-shadow: 0 0 0 2px rgba(228, 6, 126, 0.1);
+}
+
+.form-textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e4067e'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  padding-right: 40px;
+}
+
+.submit-button {
+  background-color: #e4067e;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.submit-button:hover {
+  background-color: #c0056a;
+  transform: translateY(-2px);
+}
+
+.error-message {
+  color: #e4067e;
+  margin-top: 5px;
+  font-size: 14px;
+  font-weight: 500;
+} 

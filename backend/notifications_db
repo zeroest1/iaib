@@ -1,0 +1,26 @@
+-- users table
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100),
+  email VARCHAR(100) UNIQUE NOT NULL,
+  role VARCHAR(20) -- "student" or "program_director"
+);
+
+-- notifications table
+CREATE TABLE notifications (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  category VARCHAR(50),
+  priority VARCHAR(20),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_by INTEGER REFERENCES users(id)
+);
+
+-- notification_read_status table
+CREATE TABLE notification_read_status (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  notification_id INTEGER REFERENCES notifications(id),
+  read BOOLEAN DEFAULT false
+);

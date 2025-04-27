@@ -1,0 +1,56 @@
+.notification-detail {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.notification-detail h2 {
+  color: #e4067e;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.notification-content {
+  background-color: #ffffff;
+  border: 1px solid #e4067e;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.notification-meta {
+  color: #666;
+  font-size: 14px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.action-button {
+  background-color: #e4067e;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.action-button:hover {
+  background-color: #c0056a;
+}
+
+.loading-message {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+} 
