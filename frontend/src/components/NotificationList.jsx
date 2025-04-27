@@ -11,6 +11,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   const [userRole, setUserRole] = useState(null);
   const [userId, setUserId] = useState(null);
   const [readStatus, setReadStatus] = useState({});
+  const [priorityFilter, setPriorityFilter] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -141,19 +142,36 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   if (filter === 'unread') {
     filteredNotifications = displayedNotifications.filter(n => !readStatus[n.id]);
   }
+  if (priorityFilter) {
+    filteredNotifications = filteredNotifications.filter(n => n.priority === priorityFilter);
+  }
 
   return (
     <div className="notification-list">
       <div className="header-section">
         <h2>Teated</h2>
-        {userRole === 'programmijuht' && (
-          <button 
-            onClick={() => navigate('/add')} 
-            className="add-button"
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <select
+            value={priorityFilter}
+            onChange={e => setPriorityFilter(e.target.value)}
+            className="priority-filter"
+            style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #e4067e', color: '#e4067e', fontWeight: 500 }}
           >
-            Lisa uus teade
-          </button>
-        )}
+            <option value="">Kõik prioriteedid</option>
+            <option value="kiire">Kiire</option>
+            <option value="kõrge">Kõrge</option>
+            <option value="tavaline">Tavaline</option>
+            <option value="madal">Madal</option>
+          </select>
+          {userRole === 'programmijuht' && (
+            <button 
+              onClick={() => navigate('/add')} 
+              className="add-button"
+            >
+              Lisa uus teade
+            </button>
+          )}
+        </div>
       </div>
 
       {filteredNotifications.length === 0 ? (
