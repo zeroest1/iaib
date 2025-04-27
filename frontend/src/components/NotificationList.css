@@ -1,7 +1,7 @@
 .notification-list {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 2rem;
   font-family: 'Montserrat', sans-serif;
 }
 
@@ -9,57 +9,64 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 2rem;
 }
 
-.notification-list h2 {
-  color: #e4067e;
-  margin: 0;
+h2 {
+  font-size: 2rem;
   font-weight: 600;
-  font-size: 24px;
+  color: #333;
+  margin: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #f5f5f5;
+  color: #666;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-button.active {
+  background-color: #e4067e;
+  color: white;
+}
+
+.tab-button:hover {
+  background-color: #e4067e;
+  color: white;
 }
 
 .add-button {
+  padding: 0.75rem 1.5rem;
   background-color: #e4067e;
-  color: #ffffff;
+  color: white;
   border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  cursor: pointer;
-  font-size: 16px;
+  border-radius: 4px;
   font-weight: 500;
+  cursor: pointer;
   transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .add-button:hover {
   background-color: #c0056a;
-  transform: translateY(-2px);
-}
-
-.add-button::before {
-  content: '+';
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.notification-list ul {
-  list-style: none;
-  padding: 0;
 }
 
 .notification-item {
-  background-color: #ffffff;
-  border: 2px solid #e4067e;
+  background: white;
   border-radius: 8px;
-  margin-bottom: 15px;
-  padding: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+  padding: 1rem;
   position: relative;
   overflow: hidden;
 }
@@ -70,60 +77,114 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 8px;
+  width: 4px;
 }
 
 .notification-item[data-priority="kiire"]::before {
-  background-color: #ff0000; /* Bright Red for Kiire */
+  background-color: #ff0000;
 }
 
 .notification-item[data-priority="kõrge"]::before {
-  background-color: #ffbb33; /* Yellow for Kõrge */
+  background-color: #ffbb33;
 }
 
 .notification-item[data-priority="tavaline"]::before {
-  background-color: #4285f4; /* Blue for Tavaline */
+  background-color: #4285f4;
 }
 
 .notification-item[data-priority="madal"]::before {
-  background-color: #9e9e9e; /* Grey for Madal */
+  background-color: #9e9e9e;
 }
 
-.notification-item:hover {
-  box-shadow: 0 2px 8px rgba(228, 6, 126, 0.2);
+.notification-item.unread {
+  background: #fff7f7;
+  font-weight: 600;
+  border-left: 6px solid #e4067e;
+}
+
+.notification-item.read {
+  background: #f7f7fa;
+  font-weight: 400;
+  border-left: 6px solid #ececec;
+}
+
+.notification-item.unread .notification-link h3 {
+  color: #e4067e;
+}
+
+.notification-item.read .notification-link h3 {
+  color: #333;
+}
+
+.notification-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .notification-link {
-  color: #342b60;
+  flex: 1;
   text-decoration: none;
-  font-weight: 500;
-  flex-grow: 1;
-  font-size: 16px;
+  color: inherit;
 }
 
-.notification-link:hover {
-  text-decoration: underline;
+.notification-link h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.excerpt {
+  margin: 0.5rem 0;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.creator {
+  margin: 0.5rem 0 0 0;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.favorite-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #ccc;
+  transition: all 0.3s ease;
+}
+
+.favorite-button.active {
+  color: #ffbb33;
+}
+
+.favorite-button:hover {
+  transform: scale(1.1);
 }
 
 .delete-button {
-  background-color: #e4067e;
-  color: #ffffff;
+  padding: 0.5rem 1rem;
+  background-color: #ff4444;
+  color: white;
   border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  border-radius: 4px;
   font-weight: 500;
-  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .delete-button:hover {
-  background-color: #c0056a;
+  background-color: #cc0000;
 }
 
 .empty-message {
   text-align: center;
   color: #666;
-  font-style: italic;
-  font-size: 16px;
+  font-size: 1.1rem;
+  margin: 2rem 0;
 } 

@@ -14,10 +14,28 @@ const NotificationEdit = () => {
     priority: 'tavaline'
   });
   const [error, setError] = useState('');
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
+    fetchUserRole();
     fetchNotification();
   }, []);
+
+  const fetchUserRole = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('http://localhost:5000/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUserRole(res.data.role);
+      if (res.data.role !== 'programmijuht') {
+        navigate('/');
+      }
+    } catch (err) {
+      setUserRole(null);
+      navigate('/');
+    }
+  };
 
   const fetchNotification = async () => {
     try {

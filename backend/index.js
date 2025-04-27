@@ -3,12 +3,16 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const notificationRoutes = require('./routes/notifications');
+const authRoutes = require('./routes/auth');
+const favoritesRoutes = require('./routes/favorites');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/favorites', favoritesRoutes);
 
 // PostgreSQL connection
 const pool = new Pool({

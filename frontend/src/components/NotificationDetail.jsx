@@ -8,17 +8,40 @@ const NotificationDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [notification, setNotification] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     fetchNotification();
+    fetchUserRole();
   }, []);
 
   const fetchNotification = async () => {
     try {
       const res = await axios.get(`http://localhost:5000/api/notifications/${id}`);
       setNotification(res.data);
+      setNotFound(false);
     } catch (err) {
-      console.error('Viga teate laadimisel:', err);
+      if (err.response && err.response.status === 404) {
+        setNotFound(true);
+      } else {
+        console.error('Viga teate laadimisel:', err);
+      }
+    }
+  };
+
+  const fetchUserRole = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('http://localhost:5000/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUserRole(res.data.role);
+      setUserId(res.data.id);
+    } catch (err) {
+      setUserRole(null);
+      setUserId(null);
     }
   };
 
@@ -41,6 +64,10 @@ const NotificationDetail = () => {
     }
   };
 
+  if (notFound) {
+    return <p className="error-message">See teade on kustutatud või ei ole olemas.</p>;
+  }
+
   if (!notification) {
     return <p className="loading-message">Laen...</p>;
   }
@@ -58,9 +85,11 @@ const NotificationDetail = () => {
       </div>
       <div className="button-group">
         <button onClick={handleBack} className="action-button">Tagasi</button>
-        <Link to={`/notifications/${id}/edit`} className="action-button">
-          Muuda teadet
-        </Link>
+        {userRole === 'programmijuht' && userId === notification.created_by && (
+          <Link to={`/notifications/${id}/edit`} className="action-button">
+            Muuda teadet
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -25,12 +25,16 @@ const NotificationForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const token = localStorage.getItem('token');
+      const userRes = await axios.get('http://localhost:5000/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       await axios.post('http://localhost:5000/api/notifications', {
         title: formData.title,
         content: formData.content,
         category: formData.category,
         priority: formData.priority,
-        createdBy: 1
+        createdBy: userRes.data.id
       });
       navigate('/');
     } catch (err) {

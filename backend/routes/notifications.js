@@ -2,6 +2,19 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key';
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token provided' });
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+}
 
 // Get all notifications with user information
 router.get('/', async (req, res) => {
@@ -15,6 +28,46 @@ router.get('/', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error('Error fetching notifications:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get read status for all notifications for the current user
+router.get('/read-status', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT notification_id, read FROM notification_read_status WHERE user_id = $1', [req.user.id]);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Mark a notification as read for the current user
+router.post('/:id/read', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query(`
+      INSERT INTO notification_read_status (user_id, notification_id, read)
+      VALUES ($1, $2, true)
+      ON CONFLICT (user_id, notification_id) DO UPDATE SET read = true
+    `, [req.user.id, id]);
+    res.json({ message: 'Notification marked as read' });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get unread notifications for the current user
+router.get('/unread', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT n.* FROM notifications n
+      LEFT JOIN notification_read_status r ON n.id = r.notification_id AND r.user_id = $1
+      WHERE r.read IS NULL OR r.read = false
+      ORDER BY n.created_at DESC
+    `, [req.user.id]);
+    res.json(result.rows);
+  } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }
 });

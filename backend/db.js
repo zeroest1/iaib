@@ -27,9 +27,10 @@ const createTables = async () => {
       -- users table
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(100),
+        name VARCHAR(100) NOT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,
-        role VARCHAR(20) -- "student" or "program_director"
+        role VARCHAR(20) NOT NULL CHECK (role IN ('student', 'programmijuht')),
+        password VARCHAR(255) NOT NULL
       );
 
       -- notifications table
@@ -37,18 +38,20 @@ const createTables = async () => {
         id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
         content TEXT NOT NULL,
+        excerpt TEXT,
         category VARCHAR(50),
         priority VARCHAR(20),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         created_by INTEGER REFERENCES users(id)
       );
 
-      -- notification_read_status table
-      CREATE TABLE IF NOT EXISTS notification_read_status (
+      -- favorites table
+      CREATE TABLE IF NOT EXISTS favorites (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
-        notification_id INTEGER REFERENCES notifications(id),
-        read BOOLEAN DEFAULT false
+        notification_id INTEGER REFERENCES notifications(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, notification_id)
       );
     `);
     console.log('Tables created successfully');
