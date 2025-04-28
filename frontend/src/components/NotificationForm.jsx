@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './styles/NotificationForm.css';
+import './NotificationForm.css';
 
 const NotificationForm = () => {
   const [formData, setFormData] = useState({

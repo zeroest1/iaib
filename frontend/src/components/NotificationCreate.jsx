@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import API from '../../services/api';
+import API from '../api';
 
 function NotificationCreate() {
   const [title, setTitle] = useState('');
