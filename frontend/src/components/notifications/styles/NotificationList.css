@@ -187,4 +187,120 @@ h2 {
   color: #666;
   font-size: 1.1rem;
   margin: 2rem 0;
+}
+
+.category-dropdown-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid #e4067e;
+  background: #fff;
+  color: #e4067e;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Montserrat', sans-serif;
+  transition: background 0.2s, color 0.2s;
+}
+
+.category-dropdown-btn:focus {
+  outline: none;
+  background: #f7f7fa;
+}
+
+.category-dropdown-menu {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  background: #fff;
+  border: 1px solid #e4067e;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 1rem;
+  z-index: 100;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.category-dropdown-menu label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.custom-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.custom-modal {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  padding: 2rem 2.5rem;
+  min-width: 320px;
+  max-width: 90vw;
+  text-align: center;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.custom-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.custom-modal-confirm {
+  background: #e4067e;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.custom-modal-confirm:hover {
+  background: #c0056a;
+}
+
+.custom-modal-cancel {
+  background: #fff;
+  color: #e4067e;
+  border: 1.5px solid #e4067e;
+  border-radius: 4px;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.custom-modal-cancel:hover {
+  background: #f7f7fa;
+  color: #c0056a;
+}
+
+.category-label {
+  display: inline-block;
+  background: #f5f5f5;
+  color: #e4067e;
+  border-radius: 12px;
+  padding: 0.15em 0.75em;
+  font-size: 0.85em;
+  font-weight: 600;
+  margin-left: 0.25em;
+  text-transform: capitalize;
+  letter-spacing: 0.01em;
 } 

@@ -19,6 +19,22 @@ const usePolling = (fetchFunction) => {
   }, [fetchFunction]);
 };
 
+// ConfirmationModal component
+const ConfirmationModal = ({ open, message, onConfirm, onCancel }) => {
+  if (!open) return null;
+  return (
+    <div className="custom-modal-overlay">
+      <div className="custom-modal">
+        <p>{message}</p>
+        <div className="custom-modal-actions">
+          <button className="custom-modal-confirm" onClick={onConfirm}>Kinnita</button>
+          <button className="custom-modal-cancel" onClick={onCancel}>Tühista</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const DashboardLayout = ({ children }) => {
   const [favorites, setFavorites] = useState([]);
   const [unread, setUnread] = useState([]);
@@ -27,6 +43,7 @@ const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
   const fetchFavorites = useCallback(async () => {
     try {
@@ -71,8 +88,17 @@ const DashboardLayout = ({ children }) => {
   };
 
   const handleLogout = () => {
+    setLogoutModalOpen(true);
+  };
+
+  const confirmLogout = () => {
     logout();
     navigate('/login');
+    setLogoutModalOpen(false);
+  };
+
+  const cancelLogout = () => {
+    setLogoutModalOpen(false);
   };
 
   const handleSidebarClick = (filter) => {
@@ -140,6 +166,12 @@ const DashboardLayout = ({ children }) => {
           ) : children}
         </div>
       </div>
+      <ConfirmationModal
+        open={logoutModalOpen}
+        message="Oled kindel, et soovid välja logida?"
+        onConfirm={confirmLogout}
+        onCancel={cancelLogout}
+      />
     </div>
   );
 };
