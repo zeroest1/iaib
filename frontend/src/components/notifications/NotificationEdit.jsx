@@ -105,8 +105,13 @@ const NotificationEdit = () => {
             required
           >
             <option value="">Vali kategooria</option>
-            <option value="üldine">Üldine</option>
-            <option value="tähtis">Tähtis</option>
+            <option value="õppetöö">Õppetöö</option>
+            <option value="hindamine">Hindamine</option>
+            <option value="praktika">Praktika</option>
+            <option value="stipendium">Stipendium</option>
+            <option value="sündmused">Sündmused</option>
+            <option value="erakorralised">Erakorralised</option>
+            <option value="muu">Muu</option>
           </select>
         </div>
         <div className="form-group">

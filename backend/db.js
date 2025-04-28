@@ -39,7 +39,7 @@ const createTables = async () => {
         title VARCHAR(255) NOT NULL,
         content TEXT NOT NULL,
         excerpt TEXT,
-        category VARCHAR(50),
+        category VARCHAR(50) CHECK (category IN ('õppetöö', 'hindamine', 'praktika', 'stipendium', 'sündmused', 'erakorralised', 'muu')),
         priority VARCHAR(20),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         created_by INTEGER REFERENCES users(id)

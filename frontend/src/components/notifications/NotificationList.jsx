@@ -15,7 +15,19 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   const [userId, setUserId] = useState(null);
   const [readStatus, setReadStatus] = useState({});
   const [priorityFilter, setPriorityFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const navigate = useNavigate();
+
+  const categories = [
+    { value: '', label: 'Kõik' },
+    { value: 'õppetöö', label: 'Õppetöö' },
+    { value: 'hindamine', label: 'Hindamine' },
+    { value: 'praktika', label: 'Praktika' },
+    { value: 'stipendium', label: 'Stipendium' },
+    { value: 'sündmused', label: 'Sündmused' },
+    { value: 'erakorralised', label: 'Erakorralised' },
+    { value: 'muu', label: 'Muu' },
+  ];
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -148,32 +160,57 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   if (priorityFilter) {
     filteredNotifications = filteredNotifications.filter(n => n.priority === priorityFilter);
   }
+  if (categoryFilter) {
+    filteredNotifications = filteredNotifications.filter(n => n.category === categoryFilter);
+  }
 
   return (
     <div className="notification-list">
       <div className="header-section">
         <h2>Teated</h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <select
-            value={priorityFilter}
-            onChange={e => setPriorityFilter(e.target.value)}
-            className="priority-filter"
-            style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #e4067e', color: '#e4067e', fontWeight: 500 }}
-          >
-            <option value="">Kõik prioriteedid</option>
-            <option value="kiire">Kiire</option>
-            <option value="kõrge">Kõrge</option>
-            <option value="tavaline">Tavaline</option>
-            <option value="madal">Madal</option>
-          </select>
-          {userRole === 'programmijuht' && (
-            <button 
-              onClick={() => navigate('/add')} 
-              className="add-button"
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {categories.map(cat => (
+              <button
+                key={cat.value}
+                onClick={() => setCategoryFilter(cat.value)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: 20,
+                  border: '1px solid #e4067e',
+                  background: categoryFilter === cat.value ? '#e4067e' : '#fff',
+                  color: categoryFilter === cat.value ? '#fff' : '#e4067e',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <select
+              value={priorityFilter}
+              onChange={e => setPriorityFilter(e.target.value)}
+              className="priority-filter"
+              style={{ padding: '0.5rem', borderRadius: 4, border: '1px solid #e4067e', color: '#e4067e', fontWeight: 500 }}
             >
-              Lisa uus teade
-            </button>
-          )}
+              <option value="">Kõik prioriteedid</option>
+              <option value="kiire">Kiire</option>
+              <option value="kõrge">Kõrge</option>
+              <option value="tavaline">Tavaline</option>
+              <option value="madal">Madal</option>
+            </select>
+            {userRole === 'programmijuht' && (
+              <button 
+                onClick={() => navigate('/add')} 
+                className="add-button"
+              >
+                Lisa uus teade
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
