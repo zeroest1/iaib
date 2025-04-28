@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import './styles/Login.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -21,10 +22,10 @@ const Login = () => {
   };
 
   return (
-    <div className="login-form" style={{ maxWidth: 400, margin: '2rem auto', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+    <div className="login-form">
       <h2>Logi sisse</h2>
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 16 }}>
+        <div className="form-group">
           <label htmlFor="email">Email</label>
           <input
             id="email"
@@ -32,10 +33,9 @@ const Login = () => {
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
           />
         </div>
-        <div style={{ marginBottom: 16 }}>
+        <div className="form-group">
           <label htmlFor="password">Parool</label>
           <input
             id="password"
@@ -43,11 +43,10 @@ const Login = () => {
             value={password}
             onChange={e => setPassword(e.target.value)}
             required
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
           />
         </div>
-        {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
-        <button type="submit" style={{ width: '100%', padding: 10, background: '#e4067e', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600 }}>Logi sisse</button>
+        {error && <div className="error-message">{error}</div>}
+        <button type="submit" className="submit-button">Logi sisse</button>
       </form>
     </div>
   );

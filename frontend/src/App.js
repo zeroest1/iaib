@@ -1,13 +1,13 @@
 // src/App.js
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import NotificationForm from './components/NotificationForm';
-import NotificationList from './components/NotificationList';
-import NotificationDetail from './components/NotificationDetail';
-import NotificationEdit from './components/NotificationEdit';
-import Login from './components/Login';
-import Register from './components/Register';
-import AuthPage from './components/AuthPage';
+import NotificationForm from './components/notifications/NotificationForm';
+import NotificationList from './components/notifications/NotificationList';
+import NotificationDetail from './components/notifications/NotificationDetail';
+import NotificationEdit from './components/notifications/NotificationEdit';
+import AuthPage from './components/auth/AuthPage';
 import DashboardLayout from './components/DashboardLayout';
+import Login from './components/auth/Login';
+import Register from './components/auth/Register';
 
 
 

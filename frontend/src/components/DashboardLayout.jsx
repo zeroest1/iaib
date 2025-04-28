@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import './DashboardLayout.css';
+import './styles/DashboardLayout.css';
 import axios from 'axios';
-import NotificationList from './NotificationList';
+import NotificationList from './notifications/NotificationList';
 
 const DashboardLayout = ({ children }) => {
   const [user, setUser] = useState(null);

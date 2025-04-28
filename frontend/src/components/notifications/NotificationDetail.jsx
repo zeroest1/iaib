@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import './NotificationDetail.css';
+import './styles/NotificationDetail.css';
 
 const NotificationDetail = () => {
   const { id } = useParams();

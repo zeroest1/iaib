@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import './styles/Register.css';
 
 const Register = () => {
   const [form, setForm] = useState({
@@ -31,10 +32,10 @@ const Register = () => {
   };
 
   return (
-    <div className="register-form" style={{ maxWidth: 400, margin: '2rem auto', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+    <div className="register-form">
       <h2>Registreeru</h2>
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 16 }}>
+        <div className="form-group">
           <label htmlFor="name">Nimi</label>
           <input
             id="name"
@@ -43,10 +44,9 @@ const Register = () => {
             value={form.name}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
           />
         </div>
-        <div style={{ marginBottom: 16 }}>
+        <div className="form-group">
           <label htmlFor="email">Email</label>
           <input
             id="email"
@@ -55,10 +55,9 @@ const Register = () => {
             value={form.email}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
           />
         </div>
-        <div style={{ marginBottom: 16 }}>
+        <div className="form-group">
           <label htmlFor="password">Parool</label>
           <input
             id="password"
@@ -67,24 +66,22 @@ const Register = () => {
             value={form.password}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
           />
         </div>
-        <div style={{ marginBottom: 16 }}>
+        <div className="form-group">
           <label htmlFor="role">Roll</label>
           <select
             id="role"
             name="role"
             value={form.role}
             onChange={handleChange}
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
           >
             <option value="student">Õpilane</option>
             <option value="programmijuht">Programmijuht</option>
           </select>
         </div>
-        {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
-        <button type="submit" style={{ width: '100%', padding: 10, background: '#e4067e', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600 }}>Registreeru</button>
+        {error && <div className="error-message">{error}</div>}
+        <button type="submit" className="submit-button">Registreeru</button>
       </form>
     </div>
   );
