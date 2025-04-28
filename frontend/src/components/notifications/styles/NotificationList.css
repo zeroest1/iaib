@@ -187,4 +187,12 @@ h2 {
   color: #666;
   font-size: 1.1rem;
   margin: 2rem 0;
+}
+
+.priority-filter {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #e4067e;
+  color: #e4067e;
+  font-weight: 500;
 } 

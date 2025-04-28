@@ -1,83 +1,104 @@
-// src/components/NotificationForm.jsx
-import React, { useState } from 'react';
+// src/components/NotificationEdit.jsx
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import './NotificationForm.css';
+import './styles/NotificationForm.css';
 
-const NotificationForm = () => {
-  const [formData, setFormData] = useState({
+const NotificationEdit = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [notification, setNotification] = useState({
     title: '',
     content: '',
     category: '',
     priority: 'tavaline'
   });
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    fetchUserRole();
+    fetchNotification();
+  }, []);
+
+  const fetchUserRole = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get('http://localhost:5000/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUserRole(res.data.role);
+      if (res.data.role !== 'programmijuht') {
+        navigate('/');
+      }
+    } catch (err) {
+      setUserRole(null);
+      navigate('/');
+    }
+  };
+
+  const fetchNotification = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/notifications/${id}`);
+      setNotification({
+        title: res.data.title,
+        content: res.data.content,
+        category: res.data.category,
+        priority: res.data.priority
+      });
+    } catch (err) {
+      console.error('Viga teate laadimisel:', err);
+      setError('Viga teate laadimisel');
+    }
+  };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setNotification({ ...notification, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      const userRes = await axios.get('http://localhost:5000/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      await axios.post('http://localhost:5000/api/notifications', {
-        title: formData.title,
-        content: formData.content,
-        category: formData.category,
-        priority: formData.priority,
-        createdBy: userRes.data.id
-      });
+      await axios.put(`http://localhost:5000/api/notifications/${id}`, notification);
       navigate('/');
     } catch (err) {
-      setError('Viga teate lisamisel');
-      console.error(err);
+      console.error('Viga teate muutmisel:', err);
+      setError('Viga teate muutmisel');
     }
   };
 
   return (
     <div className="notification-form">
-      <h2>Lisa uus teade</h2>
+      <h2>Muuda teadet</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="title">Pealkiri</label>
           <input
             type="text"
-            id="title"
             name="title"
-            value={formData.title}
+            value={notification.title}
             onChange={handleChange}
             className="form-input"
-            placeholder="Sisesta pealkiri"
+            placeholder="Pealkiri"
             required
           />
         </div>
         <div className="form-group">
           <label htmlFor="content">Sisu</label>
           <textarea
-            id="content"
             name="content"
-            value={formData.content}
+            value={notification.content}
             onChange={handleChange}
             className="form-textarea"
-            placeholder="Sisesta teate sisu"
+            placeholder="Sisu"
             required
           />
         </div>
         <div className="form-group">
           <label htmlFor="category">Kategooria</label>
           <select
-            id="category"
             name="category"
-            value={formData.category}
+            value={notification.category}
             onChange={handleChange}
             className="form-select"
             required
@@ -90,9 +111,8 @@ const NotificationForm = () => {
         <div className="form-group">
           <label htmlFor="priority">Prioriteet</label>
           <select
-            id="priority"
             name="priority"
-            value={formData.priority}
+            value={notification.priority}
             onChange={handleChange}
             className="form-select"
             required
@@ -104,12 +124,10 @@ const NotificationForm = () => {
           </select>
         </div>
         {error && <p className="error-message">{error}</p>}
-        <button type="submit" className="submit-button">
-          Lisa teade
-        </button>
+        <button type="submit" className="submit-button">Salvesta muudatused</button>
       </form>
     </div>
   );
 };
 
-export default NotificationForm;
+export default NotificationEdit;
