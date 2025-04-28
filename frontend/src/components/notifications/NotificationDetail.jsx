@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './styles/NotificationDetail.css';
+import { API_BASE_URL } from '../../config/api';
 
 const NotificationDetail = () => {
   const { id } = useParams();
@@ -19,7 +20,7 @@ const NotificationDetail = () => {
 
   const fetchNotification = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/notifications/${id}`);
+      const res = await axios.get(`${API_BASE_URL}/notifications/${id}`);
       setNotification(res.data);
       setNotFound(false);
     } catch (err) {
@@ -34,7 +35,7 @@ const NotificationDetail = () => {
   const fetchUserRole = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/auth/me', {
+      const res = await axios.get(`${API_BASE_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUserRole(res.data.role);

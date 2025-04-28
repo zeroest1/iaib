@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './styles/NotificationForm.css';
+import { API_BASE_URL } from '../../config/api';
 
 const NotificationEdit = () => {
   const { id } = useParams();
@@ -24,7 +25,7 @@ const NotificationEdit = () => {
   const fetchUserRole = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/auth/me', {
+      const res = await axios.get(`${API_BASE_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUserRole(res.data.role);
@@ -39,7 +40,7 @@ const NotificationEdit = () => {
 
   const fetchNotification = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/notifications/${id}`);
+      const res = await axios.get(`${API_BASE_URL}/notifications/${id}`);
       setNotification({
         title: res.data.title,
         content: res.data.content,
@@ -59,7 +60,7 @@ const NotificationEdit = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/notifications/${id}`, notification);
+      await axios.put(`${API_BASE_URL}/notifications/${id}`, notification);
       navigate('/');
     } catch (err) {
       console.error('Viga teate muutmisel:', err);

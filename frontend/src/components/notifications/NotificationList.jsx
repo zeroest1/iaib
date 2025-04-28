@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import './styles/NotificationList.css';
+import { API_BASE_URL } from '../../config/api';
 
 const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavoritesChange, filter = 'all', onUnreadChange }) => {
   const [notifications, setNotifications] = useState([]);
@@ -39,7 +40,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   const fetchUserRole = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/auth/me', {
+      const res = await axios.get(`${API_BASE_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUserRole(res.data.role);
@@ -53,7 +54,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
 
   const fetchNotifications = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/notifications');
+      const res = await axios.get(`${API_BASE_URL}/notifications`);
       setNotifications(res.data);
     } catch (err) {
       console.error('Viga teadete laadimisel:', err);
@@ -63,7 +64,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   const fetchFavorites = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/favorites', {
+      const res = await axios.get(`${API_BASE_URL}/favorites`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setFavoritesList(res.data);
@@ -75,7 +76,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   const fetchReadStatus = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/notifications/read-status', {
+      const res = await axios.get(`${API_BASE_URL}/notifications/read-status`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setReadStatus(res.data.reduce((acc, curr) => {
@@ -89,7 +90,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/notifications/${id}`);
+      await axios.delete(`${API_BASE_URL}/notifications/${id}`);
       setNotifications(notifications.filter((n) => n.id !== id));
     } catch (err) {
       console.error('Viga kustutamisel:', err);
@@ -100,16 +101,16 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     try {
       const token = localStorage.getItem('token');
       if (favoritesList.some(f => f.notification_id === notificationId)) {
-        await axios.delete(`http://localhost:5000/api/favorites/${notificationId}`, {
+        await axios.delete(`${API_BASE_URL}/favorites/${notificationId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setFavoritesList(favoritesList.filter(f => f.notification_id !== notificationId));
         if (onFavoritesChange) onFavoritesChange();
       } else {
-        await axios.post('http://localhost:5000/api/favorites', { notificationId }, {
+        await axios.post(`${API_BASE_URL}/favorites`, { notificationId }, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        const res = await axios.get(`http://localhost:5000/api/notifications/${notificationId}`);
+        const res = await axios.get(`${API_BASE_URL}/notifications/${notificationId}`);
         setFavoritesList([...favoritesList, { notification_id: notificationId, notification: res.data }]);
         if (onFavoritesChange) onFavoritesChange();
       }
@@ -130,7 +131,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   const markAsRead = async (notificationId) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`http://localhost:5000/api/notifications/${notificationId}/read`, {}, {
+      await axios.post(`${API_BASE_URL}/notifications/${notificationId}/read`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setReadStatus(prev => ({ ...prev, [notificationId]: true }));

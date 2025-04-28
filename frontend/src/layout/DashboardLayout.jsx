@@ -1,49 +1,23 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './styles/DashboardLayout.css';
 import axios from 'axios';
-import NotificationList from './notifications/NotificationList';
+import NotificationList from '../components/notifications/NotificationList';
+import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../config/api';
 
 const DashboardLayout = ({ children }) => {
-  const [user, setUser] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [unread, setUnread] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/api/auth/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setUser(res.data);
-        if (res.data.role === 'student') {
-          fetchFavorites(token);
-          fetchUnread(token);
-        }
-      } catch (err) {
-        setUser(null);
-      }
-    };
-    fetchUser();
-    // eslint-disable-next-line
-  }, []);
-
-  useEffect(() => {
-    if (user && user.role === 'student') {
-      const token = localStorage.getItem('token');
-      fetchFavorites(token);
-      fetchUnread(token);
-    }
-    // eslint-disable-next-line
-  }, [location.pathname]);
-
-  const fetchFavorites = useCallback(async (token) => {
+  const fetchFavorites = useCallback(async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/favorites', {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_BASE_URL}/favorites`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setFavorites(res.data);
@@ -52,9 +26,10 @@ const DashboardLayout = ({ children }) => {
     }
   }, []);
 
-  const fetchUnread = useCallback(async (token) => {
+  const fetchUnread = useCallback(async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/notifications/unread', {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_BASE_URL}/notifications/unread`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUnread(res.data);
@@ -64,7 +39,7 @@ const DashboardLayout = ({ children }) => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    logout();
     navigate('/login');
   };
 
@@ -75,13 +50,11 @@ const DashboardLayout = ({ children }) => {
   };
 
   const refreshFavorites = () => {
-    const token = localStorage.getItem('token');
-    fetchFavorites(token);
+    fetchFavorites();
   };
 
   const refreshUnread = () => {
-    const token = localStorage.getItem('token');
-    fetchUnread(token);
+    fetchUnread();
   };
 
   return (

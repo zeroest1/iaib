@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './styles/NotificationForm.css';
+import { API_BASE_URL } from '../../config/api';
 
 const NotificationForm = () => {
   const [formData, setFormData] = useState({
@@ -26,10 +27,10 @@ const NotificationForm = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const userRes = await axios.get('http://localhost:5000/api/auth/me', {
+      const userRes = await axios.get(`${API_BASE_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      await axios.post('http://localhost:5000/api/notifications', {
+      await axios.post(`${API_BASE_URL}/notifications`, {
         title: formData.title,
         content: formData.content,
         category: formData.category,
