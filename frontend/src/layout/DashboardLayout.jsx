@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import './styles/DashboardLayout.css';
 import axios from 'axios';
@@ -6,9 +6,23 @@ import NotificationList from '../components/notifications/NotificationList';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
 
+const POLLING_INTERVAL = 5000; // Poll every 5 seconds
+
+// Custom hook for polling data
+const usePolling = (fetchFunction) => {
+  useEffect(() => {
+    fetchFunction();
+    const interval = setInterval(() => {
+      fetchFunction();
+    }, POLLING_INTERVAL);
+    return () => clearInterval(interval);
+  }, [fetchFunction]);
+};
+
 const DashboardLayout = ({ children }) => {
   const [favorites, setFavorites] = useState([]);
   const [unread, setUnread] = useState([]);
+  const [allNotifications, setAllNotifications] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,6 +52,24 @@ const DashboardLayout = ({ children }) => {
     }
   }, []);
 
+  const fetchAllNotifications = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/notifications`);
+      setAllNotifications(res.data);
+    } catch (err) {
+      setAllNotifications([]);
+    }
+  }, []);
+
+  // Use the custom hook for polling
+  usePolling(fetchAllNotifications);
+  usePolling(fetchUnread);
+  usePolling(fetchFavorites);
+
+  const refreshAllNotifications = () => {
+    fetchAllNotifications();
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -65,7 +97,14 @@ const DashboardLayout = ({ children }) => {
           <ul>
             {user && user.role === 'student' && (
               <>
-                <li><button className={activeFilter === 'all' ? 'sidebar-active' : ''} onClick={() => handleSidebarClick('all')}>Kõik teated</button></li>
+                <li>
+                  <button
+                    className={activeFilter === 'all' ? 'sidebar-active' : ''}
+                    onClick={() => handleSidebarClick('all')}
+                  >
+                    Kõik teated ({allNotifications.length})
+                  </button>
+                </li>
                 <li><button className={activeFilter === 'unread' ? 'sidebar-active' : ''} onClick={() => handleSidebarClick('unread')}>Lugemata ({unread.length})</button></li>
                 <li><button className={activeFilter === 'favorites' ? 'sidebar-active' : ''} onClick={() => handleSidebarClick('favorites')}>Lemmikud ({favorites.length})</button></li>
               </>

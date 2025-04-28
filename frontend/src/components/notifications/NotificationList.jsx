@@ -5,6 +5,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import './styles/NotificationList.css';
 import { API_BASE_URL } from '../../config/api';
 
+const POLLING_INTERVAL = 5000; // Poll every 5 seconds
+
 const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavoritesChange, filter = 'all', onUnreadChange }) => {
   const [notifications, setNotifications] = useState([]);
   const [favoritesList, setFavoritesList] = useState([]);
@@ -33,7 +35,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
       if (userRole === 'student') {
         fetchFavorites();
       }
-    }, 10000);
+    }, POLLING_INTERVAL);
     return () => clearInterval(interval);
   }, [userRole, navigate]);
 
