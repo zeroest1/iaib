@@ -1,9 +1,9 @@
 // src/components/NotificationForm.jsx
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import './styles/NotificationForm.css';
-import { API_BASE_URL } from '../../config/api';
+import { useAddNotificationMutation } from '../../services/api';
 
 const NotificationForm = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +14,9 @@ const NotificationForm = () => {
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { user } = useSelector(state => state.auth);
+  
+  const [addNotification, { isLoading }] = useAddNotificationMutation();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,17 +29,13 @@ const NotificationForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      const userRes = await axios.get(`${API_BASE_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      await axios.post(`${API_BASE_URL}/notifications`, {
+      await addNotification({
         title: formData.title,
         content: formData.content,
         category: formData.category,
         priority: formData.priority,
-        createdBy: userRes.data.id
-      });
+        createdBy: user.id
+      }).unwrap();
       navigate('/');
     } catch (err) {
       setError('Viga teate lisamisel');
@@ -110,8 +109,8 @@ const NotificationForm = () => {
           </select>
         </div>
         {error && <p className="error-message">{error}</p>}
-        <button type="submit" className="submit-button">
-          Lisa teade
+        <button type="submit" className="submit-button" disabled={isLoading}>
+          {isLoading ? 'Lisan teadet...' : 'Lisa teade'}
         </button>
       </form>
     </div>

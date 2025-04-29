@@ -16,6 +16,14 @@ function authenticateToken(req, res, next) {
   });
 }
 
+// Middleware to check if user is a program manager
+function checkProgramManager(req, res, next) {
+  if (req.user.role !== 'programmijuht') {
+    return res.status(403).json({ error: 'Access denied. Only program managers can perform this action.' });
+  }
+  next();
+}
+
 // Get all notifications with user information
 router.get('/', async (req, res) => {
   try {
@@ -94,8 +102,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create notification
-router.post('/', async (req, res) => {
+// Create notification - only for program managers
+router.post('/', authenticateToken, checkProgramManager, async (req, res) => {
   try {
     const { title, content, category, priority, createdBy } = req.body;
     
@@ -122,14 +130,24 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Update notification
-router.put('/:id', async (req, res) => {
+// Update notification - only for program managers and only their own notifications
+router.put('/:id', authenticateToken, checkProgramManager, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, content, category, priority } = req.body;
     
     if (!title || !content) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // First check if the notification belongs to this user
+    const notificationCheck = await pool.query(
+      'SELECT * FROM notifications WHERE id = $1 AND created_by = $2',
+      [id, req.user.id]
+    );
+    
+    if (notificationCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Access denied. You can only edit your own notifications.' });
     }
 
     const result = await pool.query(`
@@ -139,10 +157,6 @@ router.put('/:id', async (req, res) => {
       RETURNING *
     `, [title, content, category, priority, id]);
     
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Notification not found' });
-    }
-    
     res.json(result.rows[0]);
   } catch (err) {
     console.error('Error updating notification:', err);
@@ -150,20 +164,29 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Delete notification
-router.delete('/:id', async (req, res) => {
+// Delete notification - only for program managers and only their own notifications
+router.delete('/:id', authenticateToken, checkProgramManager, async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // First check if the notification belongs to this user
+    const notificationCheck = await pool.query(
+      'SELECT * FROM notifications WHERE id = $1 AND created_by = $2',
+      [id, req.user.id]
+    );
+    
+    if (notificationCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Access denied. You can only delete your own notifications.' });
+    }
     
     // First delete any read status records
     await pool.query('DELETE FROM notification_read_status WHERE notification_id = $1', [id]);
     
+    // Also delete favorites
+    await pool.query('DELETE FROM favorites WHERE notification_id = $1', [id]);
+    
     // Then delete the notification
     const result = await pool.query('DELETE FROM notifications WHERE id = $1 RETURNING *', [id]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Notification not found' });
-    }
     
     res.json({ message: 'Notification deleted successfully' });
   } catch (err) {

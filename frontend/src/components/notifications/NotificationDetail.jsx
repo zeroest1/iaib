@@ -1,50 +1,16 @@
 // src/components/NotificationDetail.jsx
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import { useSelector } from 'react-redux';
 import './styles/NotificationDetail.css';
-import { API_BASE_URL } from '../../config/api';
+import { useGetNotificationQuery } from '../../services/api';
 
 const NotificationDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [notification, setNotification] = useState(null);
-  const [userRole, setUserRole] = useState(null);
-  const [userId, setUserId] = useState(null);
-  const [notFound, setNotFound] = useState(false);
-
-  useEffect(() => {
-    fetchNotification();
-    fetchUserRole();
-  }, []);
-
-  const fetchNotification = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/notifications/${id}`);
-      setNotification(res.data);
-      setNotFound(false);
-    } catch (err) {
-      if (err.response && err.response.status === 404) {
-        setNotFound(true);
-      } else {
-        console.error('Viga teate laadimisel:', err);
-      }
-    }
-  };
-
-  const fetchUserRole = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUserRole(res.data.role);
-      setUserId(res.data.id);
-    } catch (err) {
-      setUserRole(null);
-      setUserId(null);
-    }
-  };
+  const { user } = useSelector(state => state.auth);
+  
+  const { data: notification, isLoading, error } = useGetNotificationQuery(id);
 
   const handleBack = () => {
     navigate('/');
@@ -65,13 +31,16 @@ const NotificationDetail = () => {
     }
   };
 
-  if (notFound) {
+  if (error) {
     return <p className="error-message">See teade on kustutatud või ei ole olemas.</p>;
   }
 
-  if (!notification) {
+  if (isLoading) {
     return <p className="loading-message">Laen...</p>;
   }
+
+  // Check if the current user is program manager and created this notification
+  const canEdit = user?.role === 'programmijuht' && user.id === notification.created_by;
 
   return (
     <div className="notification-detail">
@@ -86,7 +55,7 @@ const NotificationDetail = () => {
       </div>
       <div className="button-group">
         <button onClick={handleBack} className="action-button">Tagasi</button>
-        {userRole === 'programmijuht' && userId === notification.created_by && (
+        {canEdit && (
           <Link to={`/notifications/${id}/edit`} className="action-button">
             Muuda teadet
           </Link>

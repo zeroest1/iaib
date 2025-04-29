@@ -1,119 +1,106 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../features/authSlice';
+import { useGetNotificationsQuery, useGetReadStatusQuery } from '../services/api';
 import './styles/DashboardLayout.css';
-import axios from 'axios';
-import NotificationList from '../components/notifications/NotificationList';
-import { useAuth } from '../contexts/AuthContext';
-import { API_BASE_URL } from '../config/api';
-
-const POLLING_INTERVAL = 5000; // Poll every 5 seconds
-
-// Custom hook for polling data
-const usePolling = (fetchFunction) => {
-  useEffect(() => {
-    fetchFunction();
-    const interval = setInterval(() => {
-      fetchFunction();
-    }, POLLING_INTERVAL);
-    return () => clearInterval(interval);
-  }, [fetchFunction]);
-};
-
-// ConfirmationModal component
-const ConfirmationModal = ({ open, message, onConfirm, onCancel }) => {
-  if (!open) return null;
-  return (
-    <div className="custom-modal-overlay">
-      <div className="custom-modal">
-        <p>{message}</p>
-        <div className="custom-modal-actions">
-          <button className="custom-modal-confirm" onClick={onConfirm}>Kinnita</button>
-          <button className="custom-modal-cancel" onClick={onCancel}>Tühista</button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const DashboardLayout = ({ children }) => {
-  const [favorites, setFavorites] = useState([]);
-  const [unread, setUnread] = useState([]);
-  const [allNotifications, setAllNotifications] = useState([]);
-  const [activeFilter, setActiveFilter] = useState('all');
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
-  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const dispatch = useDispatch();
+  const { user } = useSelector(state => state.auth);
+  const [activeFilter, setActiveFilter] = useState(() => {
+    // Set initial filter based on location path
+    if (location.pathname === '/favorites') return 'favorites';
+    if (location.pathname === '/my-notifications') return 'my';
+    if (location.search.includes('filter=unread')) return 'unread';
+    return 'all';
+  });
 
-  const fetchFavorites = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/favorites`, {
-        headers: { Authorization: `Bearer ${token}` }
+  // RTK Query hooks
+  const { data: notifications = [], isLoading: notificationsLoading } = useGetNotificationsQuery({ my: false });
+  const { 
+    data: readStatusData = [], 
+    isLoading: readStatusLoading,
+    isSuccess: readStatusSuccess 
+  } = useGetReadStatusQuery();
+
+  // Update active filter when location changes
+  useEffect(() => {
+    if (location.pathname === '/favorites') setActiveFilter('favorites');
+    else if (location.pathname === '/my-notifications') setActiveFilter('my');
+    else if (location.search.includes('filter=unread')) setActiveFilter('unread');
+    else if (location.pathname === '/') setActiveFilter('all');
+  }, [location]);
+
+  // Calculate read status
+  const readStatus = React.useMemo(() => {
+    const status = {};
+    
+    // Mark all notifications as unread by default
+    if (notifications && notifications.length > 0) {
+      notifications.forEach(notification => {
+        status[notification.id] = false;
       });
-      setFavorites(res.data);
-    } catch (err) {
-      setFavorites([]);
     }
-  }, []);
-
-  const fetchUnread = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/notifications/unread`, {
-        headers: { Authorization: `Bearer ${token}` }
+    
+    // Update with server data if available
+    if (readStatusSuccess && readStatusData && readStatusData.length > 0) {
+      readStatusData.forEach(item => {
+        status[item.notification_id] = item.read;
       });
-      setUnread(res.data);
-    } catch (err) {
-      setUnread([]);
     }
-  }, []);
+    
+    return status;
+  }, [notifications, readStatusData, readStatusSuccess]);
 
-  const fetchAllNotifications = useCallback(async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/notifications`);
-      setAllNotifications(res.data);
-    } catch (err) {
-      setAllNotifications([]);
+  // Calculate unread count
+  const unreadCount = React.useMemo(() => {
+    if (notificationsLoading) return 0;
+    
+    // For new users with no readStatusData, all notifications are unread
+    if (notifications.length > 0 && (!readStatusData || readStatusData.length === 0)) {
+      return notifications.length;
     }
-  }, []);
-
-  // Use the custom hook for polling
-  usePolling(fetchAllNotifications);
-  usePolling(fetchUnread);
-  usePolling(fetchFavorites);
-
-  const refreshAllNotifications = () => {
-    fetchAllNotifications();
-  };
+    
+    // Count unread notifications
+    return notifications.filter(notification => 
+      readStatus[notification.id] === undefined || readStatus[notification.id] === false
+    ).length;
+  }, [notifications, readStatus, notificationsLoading, readStatusData]);
 
   const handleLogout = () => {
-    setLogoutModalOpen(true);
-  };
-
-  const confirmLogout = () => {
-    logout();
+    dispatch(logout());
     navigate('/login');
-    setLogoutModalOpen(false);
-  };
-
-  const cancelLogout = () => {
-    setLogoutModalOpen(false);
   };
 
   const handleSidebarClick = (filter) => {
     setActiveFilter(filter);
     if (filter === 'favorites') navigate('/favorites');
-    else navigate('/');
+    else if (filter === 'unread') navigate('/?filter=unread');
+    else if (filter === 'all') navigate('/');
   };
 
-  const refreshFavorites = () => {
-    fetchFavorites();
-  };
+  // Redirect to home if user tries to access program manager routes
+  useEffect(() => {
+    if (user && user.role !== 'programmijuht') {
+      if (location.pathname === '/my-notifications' || 
+          location.pathname === '/add' || 
+          location.pathname.includes('/edit')) {
+        navigate('/');
+      }
+    }
+  }, [location.pathname, user, navigate]);
 
-  const refreshUnread = () => {
-    fetchUnread();
-  };
+  // Clone the children element and pass the activeFilter prop
+  const childrenWithProps = React.Children.map(children, child => {
+    // Check if valid element
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child, { filter: activeFilter === 'unread' ? 'unread' : 'all' });
+    }
+    return child;
+  });
 
   return (
     <div className="dashboard-layout">
@@ -121,27 +108,64 @@ const DashboardLayout = ({ children }) => {
         <div className="sidebar-title">Teavitussüsteem</div>
         <nav>
           <ul>
-            {user && user.role === 'student' && (
+            {/* Common menu items for both roles */}
+            <li>
+              <button
+                className={activeFilter === 'all' ? 'sidebar-active' : ''}
+                onClick={() => handleSidebarClick('all')}
+              >
+                Teated {notificationsLoading ? '...' : `(${notifications.length})`}
+              </button>
+            </li>
+            <li>
+              <button 
+                className={activeFilter === 'unread' ? 'sidebar-active' : ''} 
+                onClick={() => handleSidebarClick('unread')}
+              >
+                Lugemata {notificationsLoading ? '...' : (
+                  <>
+                    ({unreadCount})
+                    {unreadCount > 0 && <span className="unread-badge" title="Lugemata teateid">{unreadCount}</span>}
+                  </>
+                )}
+              </button>
+            </li>
+            <li>
+              <button 
+                className={activeFilter === 'favorites' ? 'sidebar-active' : ''} 
+                onClick={() => handleSidebarClick('favorites')}
+              >
+                Lemmikud
+              </button>
+            </li>
+
+            {/* Program manager specific menu items */}
+            {user?.role === 'programmijuht' && (
               <>
                 <li>
-                  <button
-                    className={activeFilter === 'all' ? 'sidebar-active' : ''}
-                    onClick={() => handleSidebarClick('all')}
+                  <Link 
+                    to="/my-notifications" 
+                    className={activeFilter === 'my' ? 'sidebar-active' : ''}
                   >
-                    Kõik teated ({allNotifications.length})
-                  </button>
+                    Minu teated
+                  </Link>
                 </li>
-                <li><button className={activeFilter === 'unread' ? 'sidebar-active' : ''} onClick={() => handleSidebarClick('unread')}>Lugemata ({unread.length})</button></li>
-                <li><button className={activeFilter === 'favorites' ? 'sidebar-active' : ''} onClick={() => handleSidebarClick('favorites')}>Lemmikud ({favorites.length})</button></li>
+                <li>
+                  <Link 
+                    to="/add" 
+                    className={location.pathname === '/add' ? 'sidebar-active' : ''}
+                  >
+                    Lisa teade
+                  </Link>
+                </li>
               </>
             )}
-            {user && user.role === 'programmijuht' && (
-              <>
-                <li><Link to="/">Teated</Link></li>
-                <li><Link to="/add">Lisa teade</Link></li>
-              </>
-            )}
-            <li><button onClick={handleLogout} className="sidebar-logout">Logi välja</button></li>
+
+            <li>
+              <button onClick={handleLogout} className="sidebar-logout">
+                Logi välja
+              </button>
+            </li>
           </ul>
         </nav>
       </aside>
@@ -150,28 +174,14 @@ const DashboardLayout = ({ children }) => {
           {user && (
             <div className="user-info">
               <span className="user-name">{user.name}</span>
-              <span className="user-role">({user.role})</span>
+              <span className="user-role">({user.role === 'programmijuht' ? 'Programmijuht' : 'Õpilane'})</span>
             </div>
           )}
         </header>
         <div className="dashboard-children">
-          {user && user.role === 'student' ? (
-            location.pathname === '/' ? (
-              <NotificationList filter={activeFilter} onFavoritesChange={refreshFavorites} onUnreadChange={refreshUnread} />
-            ) : location.pathname === '/favorites' ? (
-              <NotificationList showFavoritesOnly={true} onFavoritesChange={refreshFavorites} onUnreadChange={refreshUnread} />
-            ) : (
-              children
-            )
-          ) : children}
+          {childrenWithProps}
         </div>
       </div>
-      <ConfirmationModal
-        open={logoutModalOpen}
-        message="Oled kindel, et soovid välja logida?"
-        onConfirm={confirmLogout}
-        onCancel={cancelLogout}
-      />
     </div>
   );
 };

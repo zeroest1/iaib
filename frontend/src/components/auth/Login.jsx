@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useLoginMutation, useGetMeQuery } from '../../services/api';
 import './styles/Login.css';
 
 const Login = () => {
@@ -8,16 +8,19 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuth();
+  
+  const [login, { isLoading: isLoginLoading }] = useLoginMutation();
+  const { refetch } = useGetMeQuery();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      await login(email, password);
+      await login({ email, password }).unwrap();
+      await refetch(); // Refresh user data after login
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed');
+      setError(err.data?.error || 'Login failed');
     }
   };
 
@@ -46,7 +49,9 @@ const Login = () => {
           />
         </div>
         {error && <div className="error-message">{error}</div>}
-        <button type="submit" className="submit-button">Logi sisse</button>
+        <button type="submit" className="submit-button" disabled={isLoginLoading}>
+          {isLoginLoading ? 'Sisselogimine...' : 'Logi sisse'}
+        </button>
       </form>
     </div>
   );
