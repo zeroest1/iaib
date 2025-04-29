@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useRegisterMutation, useLoginMutation, useGetMeQuery } from '../../services/api';
 import './styles/Register.css';
 
 const Register = () => {
@@ -12,7 +12,10 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { register } = useAuth();
+  
+  const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
+  const [login] = useLoginMutation();
+  const { refetch } = useGetMeQuery();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -22,10 +25,13 @@ const Register = () => {
     e.preventDefault();
     setError('');
     try {
-      await register(form);
+      await register(form).unwrap();
+      // After registration, login automatically
+      await login({ email: form.email, password: form.password }).unwrap();
+      await refetch(); // Refresh user data after login
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed');
+      setError(err.data?.error || 'Registration failed');
     }
   };
 
@@ -79,7 +85,9 @@ const Register = () => {
           </select>
         </div>
         {error && <div className="error-message">{error}</div>}
-        <button type="submit" className="submit-button">Registreeru</button>
+        <button type="submit" className="submit-button" disabled={isRegisterLoading}>
+          {isRegisterLoading ? 'Registreerimine...' : 'Registreeru'}
+        </button>
       </form>
     </div>
   );

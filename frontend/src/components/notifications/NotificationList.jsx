@@ -1,11 +1,19 @@
 // src/components/NotificationList.jsx
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import axios from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import './styles/NotificationList.css';
-import { API_BASE_URL } from '../../config/api';
 import NotificationItem from './NotificationItem';
 import MultiSelectDropdown from './MultiSelectDropdown';
+import {
+  useGetNotificationsQuery,
+  useGetFavoritesQuery,
+  useGetReadStatusQuery,
+  useDeleteNotificationMutation,
+  useAddFavoriteMutation,
+  useRemoveFavoriteMutation,
+  useMarkAsReadMutation
+} from '../../services/api';
 
 const POLLING_INTERVAL = 5000; // Poll every 5 seconds
 
@@ -26,11 +34,8 @@ const ConfirmationModal = ({ open, message, onConfirm, onCancel }) => {
 };
 
 const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavoritesChange, filter = 'all', onUnreadChange, showMyNotifications = false }) => {
-  const [notifications, setNotifications] = useState([]);
-  const [favoritesList, setFavoritesList] = useState([]);
-  const [userRole, setUserRole] = useState(null);
-  const [userId, setUserId] = useState(null);
-  const [readStatus, setReadStatus] = useState({});
+  const { user } = useSelector(state => state.auth);
+  const location = useLocation();
   const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
   const [selectedPriorities, setSelectedPriorities] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -41,6 +46,80 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const priorityDropdownRef = useRef(null);
+  
+  // Console log for debugging
+  console.log('NotificationList props:', { showFavoritesOnly, filter, showMyNotifications, pathname: location.pathname });
+
+  // Set filter from location path
+  useEffect(() => {
+    if (location.pathname === '/favorites') {
+      showFavoritesOnly = true;
+    } else if (location.pathname === '/my-notifications') {
+      showMyNotifications = true;
+    }
+  }, [location.pathname]);
+
+  // RTK Query hooks
+  const { data: notifications = [], isLoading: notificationsLoading } = useGetNotificationsQuery(
+    { my: showMyNotifications },
+    { pollingInterval: POLLING_INTERVAL }
+  );
+  const { data: favoritesData = [] } = useGetFavoritesQuery(undefined, 
+    { pollingInterval: POLLING_INTERVAL }
+  );
+  const { 
+    data: readStatusData = [], 
+    isLoading: readStatusLoading,
+    isSuccess: readStatusSuccess 
+  } = useGetReadStatusQuery();
+  const [deleteNotification] = useDeleteNotificationMutation();
+  const [addFavorite] = useAddFavoriteMutation();
+  const [removeFavorite] = useRemoveFavoriteMutation();
+  const [markAsRead] = useMarkAsReadMutation();
+
+  // Debug logging for read status
+  useEffect(() => {
+    console.log("Read status data:", { 
+      readStatusData, 
+      readStatusSuccess,
+      notificationCount: notifications?.length || 0
+    });
+  }, [readStatusData, readStatusSuccess, notifications]);
+
+  // Format read status data - ALL notifications are unread for new users by default
+  const readStatus = useMemo(() => {
+    // Create an object where all notifications are marked as unread by default
+    const status = {};
+    
+    // Mark all notifications as unread by default
+    if (notifications && notifications.length > 0) {
+      notifications.forEach(notification => {
+        status[notification.id] = false; // Mark all as unread by default
+      });
+    }
+    
+    // If readStatusData exists and is not empty, update the read status for those notifications
+    if (readStatusSuccess && readStatusData && readStatusData.length > 0) {
+      readStatusData.forEach(item => {
+        status[item.notification_id] = item.read;
+      });
+    }
+    
+    return status;
+  }, [readStatusData, notifications, readStatusSuccess]);
+
+  // Calculate unread count
+  const unreadCount = useMemo(() => {
+    if (notificationsLoading) return 0;
+    
+    // For new users with no readStatusData, all notifications are unread
+    if (notifications.length > 0 && (!readStatusData || readStatusData.length === 0)) {
+      return notifications.length;
+    }
+    
+    // Otherwise count notifications marked as not read in readStatus
+    return notifications.filter(n => readStatus[n.id] === false).length;
+  }, [notifications, readStatus, notificationsLoading, readStatusData]);
 
   const categories = useMemo(() => [
     { value: 'õppetöö', label: 'Õppetöö' },
@@ -59,31 +138,6 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     { value: 'madal', label: 'Madal' },
   ], []);
 
-  // Fetch user role only once on mount
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    fetchUserRole();
-    // eslint-disable-next-line
-  }, [navigate]);
-
-  // Fetch notifications/favorites/readStatus after userRole is set
-  useEffect(() => {
-    if (!userRole) return;
-    fetchNotifications();
-    fetchFavorites();
-    fetchReadStatus();
-    const interval = setInterval(() => {
-      fetchNotifications();
-      fetchFavorites();
-    }, POLLING_INTERVAL);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line
-  }, [userRole]);
-
   // Combine dropdown outside click logic
   useEffect(() => {
     if (!dropdownOpen && !priorityDropdownOpen) return;
@@ -101,73 +155,11 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     };
   }, [dropdownOpen, priorityDropdownOpen]);
 
-  const fetchUserRole = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUserRole(res.data.role);
-      setUserId(res.data.id);
-    } catch (err) {
-      localStorage.removeItem('token');
-      navigate('/login');
-      console.error('Viga kasutaja rolli laadimisel:', err);
-    }
-  };
-
-  const fetchNotifications = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const url = showMyNotifications 
-        ? `${API_BASE_URL}/notifications/my`
-        : `${API_BASE_URL}/notifications`;
-      
-      const res = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setNotifications(res.data);
-    } catch (err) {
-      console.error('Viga teadete laadimisel:', err);
-    }
-  };
-
-  const fetchFavorites = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/favorites`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setFavoritesList(res.data);
-    } catch (err) {
-      console.error('Viga lemmikute laadimisel:', err);
-    }
-  };
-
-  const fetchReadStatus = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/notifications/read-status`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setReadStatus(res.data.reduce((acc, curr) => {
-        acc[curr.notification_id] = curr.read;
-        return acc;
-      }, {}));
-    } catch (err) {
-      setReadStatus({});
-    }
-  };
-
   const handleDelete = async (id) => {
     setModalMessage('Oled kindel, et soovid selle teate kustutada?');
     setModalAction(() => async () => {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`${API_BASE_URL}/notifications/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setNotifications(notifications.filter((n) => n.id !== id));
+        await deleteNotification(id).unwrap();
       } catch (err) {
         console.error('Viga kustutamisel:', err);
       }
@@ -178,19 +170,11 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
 
   const toggleFavorite = async (notificationId) => {
     try {
-      const token = localStorage.getItem('token');
-      if (favoritesList.some(f => f.notification_id === notificationId)) {
-        await axios.delete(`${API_BASE_URL}/favorites/${notificationId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setFavoritesList(favoritesList.filter(f => f.notification_id !== notificationId));
+      if (favoritesData.some(f => f.notification_id === notificationId)) {
+        await removeFavorite(notificationId).unwrap();
         if (onFavoritesChange) onFavoritesChange();
       } else {
-        await axios.post(`${API_BASE_URL}/favorites`, { notificationId }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const res = await axios.get(`${API_BASE_URL}/notifications/${notificationId}`);
-        setFavoritesList([...favoritesList, { notification_id: notificationId, notification: res.data }]);
+        await addFavorite(notificationId).unwrap();
         if (onFavoritesChange) onFavoritesChange();
       }
     } catch (err) {
@@ -203,16 +187,10 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     navigate('/login');
   };
 
-  const markAsRead = async (notificationId) => {
+  const handleMarkAsRead = async (notificationId) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API_BASE_URL}/notifications/${notificationId}/read`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setReadStatus(prev => ({ ...prev, [notificationId]: true }));
+      await markAsRead(notificationId).unwrap();
       if (onUnreadChange) onUnreadChange();
-      // Refresh notifications to update the unread count
-      fetchNotifications();
     } catch (err) {
       console.error('Viga teate lugemise märkimisel:', err);
     }
@@ -220,21 +198,29 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
 
   // Memoize filtered notifications
   const filteredNotifications = useMemo(() => {
-    let result = notifications;
+    if (notificationsLoading) return [];
+    
+    let result = [...notifications];
     
     // Apply my notifications filter if enabled
-    if (showMyNotifications) {
-      result = result.filter(n => n.created_by === userId);
+    if (showMyNotifications || location.pathname === '/my-notifications') {
+      result = result.filter(n => n.created_by === user?.id);
     }
     
     // Apply favorites filter if enabled
-    if (showFavoritesOnly) {
-      result = result.filter(n => favoritesList.some(f => f.notification_id === n.id));
+    if (showFavoritesOnly || location.pathname === '/favorites') {
+      result = result.filter(n => favoritesData.some(f => f.notification_id === n.id));
     }
     
     // Apply unread filter if enabled
     if (filter === 'unread') {
-      result = result.filter(n => !readStatus[n.id]);
+      // For new users, all notifications are considered unread
+      if (!readStatusData || readStatusData.length === 0) {
+        // Leave all notifications in the array (they're all unread)
+      } else {
+        // Otherwise filter by read status
+        result = result.filter(n => readStatus[n.id] === false);
+      }
     }
     
     // Apply priority filters
@@ -248,13 +234,84 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     }
     
     return result;
-  }, [notifications, favoritesList, showFavoritesOnly, filter, readStatus, selectedPriorities, selectedCategories, showMyNotifications, userId]);
+  }, [
+    notifications, 
+    favoritesData, 
+    showFavoritesOnly, 
+    filter, 
+    readStatus, 
+    selectedPriorities, 
+    selectedCategories, 
+    showMyNotifications, 
+    user, 
+    location.pathname,
+    notificationsLoading,
+    readStatusData
+  ]);
+
+  // Calculate filtered unread count
+  const filteredUnreadCount = useMemo(() => {
+    return filteredNotifications.filter(n => readStatus[n.id] === false).length;
+  }, [filteredNotifications, readStatus]);
+
+  const getPageTitle = () => {
+    if (showMyNotifications || location.pathname === '/my-notifications') 
+      return 'Minu teated';
+    if (showFavoritesOnly || location.pathname === '/favorites') 
+      return 'Lemmikud';
+    if (filter === 'unread') 
+      return 'Lugemata teated';
+    return 'Teated';
+  };
+
+  // Get the current filter description
+  const getFilterDescription = () => {
+    let description = [];
+
+    if (showMyNotifications || location.pathname === '/my-notifications')
+      description.push('Minu teated');
+    else if (showFavoritesOnly || location.pathname === '/favorites')
+      description.push('Lemmikud');
+    else if (filter === 'unread')
+      description.push('Lugemata');
+
+    if (selectedCategories.length > 0) {
+      if (selectedCategories.length === 1) {
+        description.push(`Kategooria: ${categories.find(c => c.value === selectedCategories[0])?.label || selectedCategories[0]}`);
+      } else {
+        description.push(`${selectedCategories.length} kategooriat`);
+      }
+    }
+
+    if (selectedPriorities.length > 0) {
+      if (selectedPriorities.length === 1) {
+        description.push(`Prioriteet: ${priorities.find(p => p.value === selectedPriorities[0])?.label || selectedPriorities[0]}`);
+      } else {
+        description.push(`${selectedPriorities.length} prioriteeti`);
+      }
+    }
+
+    return description.length > 0 ? description.join(', ') : 'Kõik teated';
+  };
+
+  if (notificationsLoading) {
+    return <div className="loading-message">Laen...</div>;
+  }
 
   return (
     <div className="notification-list">
       <div className="header-section">
-        <h2>{showMyNotifications ? 'Minu teated' : 'Teated'}</h2>
+        <h2>{getPageTitle()}</h2>
         <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="notification-count">
+              <span className="filter-description">{getFilterDescription()}</span>
+              <span className="count">{filteredNotifications.length}</span>
+              {filteredUnreadCount > 0 && (
+                <span className="unread-badge" title="Lugemata teateid">{filteredUnreadCount}</span>
+              )}
+            </div>
+          </div>
           <MultiSelectDropdown
             open={dropdownOpen}
             setOpen={setDropdownOpen}
@@ -273,23 +330,15 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
             buttonLabel="Vali prioriteedid"
             dropdownRef={priorityDropdownRef}
           />
-          {userRole === 'programmijuht' && !showMyNotifications && (
-            <button 
-              onClick={() => navigate('/add')} 
-              className="add-button"
-            >
-              Lisa uus teade
-            </button>
-          )}
         </div>
       </div>
       {filteredNotifications.length === 0 ? (
         <div className="no-notifications">
-          {showFavoritesOnly ? (
+          {showFavoritesOnly || location.pathname === '/favorites' ? (
             <p>Lemmikute nimekiri on tühi</p>
           ) : filter === 'unread' ? (
             <p>Lugemata teateid ei ole</p>
-          ) : showMyNotifications ? (
+          ) : showMyNotifications || location.pathname === '/my-notifications' ? (
             <p>Te ei ole veel ühtegi teadet loonud</p>
           ) : (
             <p>Teateid ei ole</p>
@@ -301,13 +350,13 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
             <NotificationItem
               key={notification.id}
               notification={notification}
-              userRole={userRole}
-              userId={userId}
+              userRole={user?.role}
+              userId={user?.id}
               readStatus={readStatus}
-              onMarkAsRead={markAsRead}
+              onMarkAsRead={handleMarkAsRead}
               onToggleFavorite={toggleFavorite}
-              onDelete={showMyNotifications ? handleDelete : null}
-              isFavorite={favoritesList.some(f => f.notification_id === notification.id)}
+              onDelete={(showMyNotifications || location.pathname === '/my-notifications') ? handleDelete : null}
+              isFavorite={favoritesData.some(f => f.notification_id === notification.id)}
             />
           ))}
         </ul>

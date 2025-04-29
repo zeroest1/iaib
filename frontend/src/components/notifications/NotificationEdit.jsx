@@ -1,9 +1,9 @@
 // src/components/NotificationEdit.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useSelector } from 'react-redux';
 import './styles/NotificationForm.css';
-import { API_BASE_URL } from '../../config/api';
+import { useGetNotificationQuery, useUpdateNotificationMutation } from '../../services/api';
 
 const NotificationEdit = () => {
   const { id } = useParams();
@@ -15,43 +15,29 @@ const NotificationEdit = () => {
     priority: 'tavaline'
   });
   const [error, setError] = useState('');
-  const [userRole, setUserRole] = useState(null);
+  const { user } = useSelector(state => state.auth);
+  
+  const { data, isLoading: isFetching } = useGetNotificationQuery(id);
+  const [updateNotification, { isLoading: isUpdating }] = useUpdateNotificationMutation();
 
+  // Set initial form data once notification is fetched
   useEffect(() => {
-    fetchUserRole();
-    fetchNotification();
-  }, []);
-
-  const fetchUserRole = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_BASE_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
+    if (data) {
+      setNotification({
+        title: data.title,
+        content: data.content,
+        category: data.category,
+        priority: data.priority
       });
-      setUserRole(res.data.role);
-      if (res.data.role !== 'programmijuht') {
-        navigate('/');
-      }
-    } catch (err) {
-      setUserRole(null);
+    }
+  }, [data]);
+
+  // Check user role and redirect if not authorized
+  useEffect(() => {
+    if (user && user.role !== 'programmijuht') {
       navigate('/');
     }
-  };
-
-  const fetchNotification = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/notifications/${id}`);
-      setNotification({
-        title: res.data.title,
-        content: res.data.content,
-        category: res.data.category,
-        priority: res.data.priority
-      });
-    } catch (err) {
-      console.error('Viga teate laadimisel:', err);
-      setError('Viga teate laadimisel');
-    }
-  };
+  }, [user, navigate]);
 
   const handleChange = (e) => {
     setNotification({ ...notification, [e.target.name]: e.target.value });
@@ -60,13 +46,20 @@ const NotificationEdit = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`${API_BASE_URL}/notifications/${id}`, notification);
+      await updateNotification({
+        id,
+        ...notification
+      }).unwrap();
       navigate('/');
     } catch (err) {
       console.error('Viga teate muutmisel:', err);
       setError('Viga teate muutmisel');
     }
   };
+
+  if (isFetching) {
+    return <div>Laen...</div>;
+  }
 
   return (
     <div className="notification-form">
@@ -130,7 +123,9 @@ const NotificationEdit = () => {
           </select>
         </div>
         {error && <p className="error-message">{error}</p>}
-        <button type="submit" className="submit-button">Salvesta muudatused</button>
+        <button type="submit" className="submit-button" disabled={isUpdating}>
+          {isUpdating ? 'Salvestamine...' : 'Salvesta muudatused'}
+        </button>
       </form>
     </div>
   );
