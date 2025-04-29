@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const NotificationItem = ({
   notification,
@@ -13,11 +13,17 @@ const NotificationItem = ({
 }) => {
   // Determine if notification is read - if not in readStatus object, mark as unread
   const isRead = readStatus && readStatus[notification.id] === true;
+  const location = useLocation();
   
   return (
     <li className={`notification-item${isRead ? ' read' : ' unread'}`} data-priority={notification.priority}>
       <div className="notification-content">
-        <Link to={`/notifications/${notification.id}`} className="notification-link" onClick={() => onMarkAsRead(notification.id)}>
+        <Link 
+          to={`/notifications/${notification.id}`} 
+          state={{ from: location.pathname + location.search }}
+          className="notification-link" 
+          onClick={() => onMarkAsRead(notification.id)}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <h3 style={{ margin: 0 }}>{notification.title}</h3>
             <span className="category-label">{notification.category}</span>

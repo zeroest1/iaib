@@ -40,6 +40,65 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Simpler version for debugging - get notifications created by the current user (without role check)
+router.get('/my', authenticateToken, async (req, res) => {
+  try {
+    console.log('Fetching my notifications for user:', req.user);
+    
+    // Even simpler version first - just return all notifications
+    // with a flag indicating if they were created by this user
+    const result = await pool.query(`
+      SELECT n.*, 
+             u.name as creator_name, 
+             u.email as creator_email,
+             (n.created_by = $1) as is_mine
+      FROM notifications n
+      LEFT JOIN users u ON n.created_by = u.id
+      ORDER BY n.created_at DESC
+    `, [req.user.id]);
+    
+    console.log('Query result:', { 
+      count: result.rows.length,
+      firstItem: result.rows.length > 0 ? result.rows[0] : null,
+      user_id: req.user.id
+    });
+    
+    // Filter the results on the server side
+    const userNotifications = result.rows.filter(n => n.created_by === req.user.id);
+    
+    console.log('Filtered results:', {
+      count: userNotifications.length,
+      firstItem: userNotifications.length > 0 ? userNotifications[0] : null
+    });
+    
+    res.json(userNotifications);
+  } catch (err) {
+    console.error('Error fetching user notifications:', err);
+    res.status(500).json({ error: 'Internal server error', details: err.message });
+  }
+});
+
+// Original version with role check - kept for reference
+// router.get('/my', authenticateToken, checkProgramManager, async (req, res) => {
+//   try {
+//     console.log('Fetching my notifications for user:', req.user);
+//     
+//     const result = await pool.query(`
+//       SELECT n.*, u.name as creator_name, u.email as creator_email
+//       FROM notifications n
+//       LEFT JOIN users u ON n.created_by = u.id
+//       WHERE n.created_by = $1
+//       ORDER BY n.created_at DESC
+//     `, [req.user.id]);
+//     
+//     console.log('Query result:', { count: result.rows.length });
+//     res.json(result.rows);
+//   } catch (err) {
+//     console.error('Error fetching user notifications:', err);
+//     res.status(500).json({ error: 'Internal server error', details: err.message });
+//   }
+// });
+
 // Get read status for all notifications for the current user
 router.get('/read-status', authenticateToken, async (req, res) => {
   try {

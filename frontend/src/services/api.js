@@ -11,11 +11,34 @@ const axiosBaseQuery =
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
+      
+      console.log(`API Request: ${method.toUpperCase()} ${baseUrl}${url}`, { 
+        headers: { ...headers, Authorization: token ? 'Bearer [REDACTED]' : undefined },
+        params
+      });
+      
       const result = await axios({ url: `${baseUrl}${url}`, method, data, params, headers });
+      
+      console.log(`API Response: ${method.toUpperCase()} ${baseUrl}${url}`, { 
+        status: result.status, 
+        data: result.data
+      });
+      
       return { data: result.data };
     } catch (axiosError) {
+      console.error(`API Error: ${method.toUpperCase()} ${baseUrl}${url}`, { 
+        status: axiosError.response?.status, 
+        data: axiosError.response?.data, 
+        message: axiosError.message,
+        stack: axiosError.stack
+      });
+      
       return {
-        error: { status: axiosError.response?.status, data: axiosError.response?.data },
+        error: { 
+          status: axiosError.response?.status, 
+          data: axiosError.response?.data,
+          message: axiosError.message
+        },
       };
     }
   };

@@ -1,10 +1,19 @@
 // src/components/NotificationList.jsx
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import './styles/NotificationList.css';
 import NotificationItem from './NotificationItem';
-import MultiSelectDropdown from './MultiSelectDropdown';
+import NotificationFilters from './NotificationFilters';
+import EmptyNotifications from './EmptyNotifications';
+import ConfirmationModal from './ConfirmationModal';
+import { POLLING_INTERVAL } from './constants';
+import {
+  calculateReadStatus,
+  calculateUnreadCount,
+  getPageTitle,
+  getFilterDescription
+} from './utils';
 import {
   useGetNotificationsQuery,
   useGetFavoritesQuery,
@@ -14,24 +23,6 @@ import {
   useRemoveFavoriteMutation,
   useMarkAsReadMutation
 } from '../../services/api';
-
-const POLLING_INTERVAL = 5000; // Poll every 5 seconds
-
-// ConfirmationModal component
-const ConfirmationModal = ({ open, message, onConfirm, onCancel }) => {
-  if (!open) return null;
-  return (
-    <div className="custom-modal-overlay">
-      <div className="custom-modal">
-        <p>{message}</p>
-        <div className="custom-modal-actions">
-          <button className="custom-modal-confirm" onClick={onConfirm}>Kinnita</button>
-          <button className="custom-modal-cancel" onClick={onCancel}>Tühista</button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavoritesChange, filter = 'all', onUnreadChange, showMyNotifications = false }) => {
   const { user } = useSelector(state => state.auth);
@@ -47,21 +38,17 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   const dropdownRef = useRef(null);
   const priorityDropdownRef = useRef(null);
   
-  // Console log for debugging
-  console.log('NotificationList props:', { showFavoritesOnly, filter, showMyNotifications, pathname: location.pathname });
-
-  // Set filter from location path
+  // Set local state based on path
+  const [isMyNotifications, setIsMyNotifications] = useState(showMyNotifications || location.pathname === '/my-notifications');
+  
+  // Update local state when path changes
   useEffect(() => {
-    if (location.pathname === '/favorites') {
-      showFavoritesOnly = true;
-    } else if (location.pathname === '/my-notifications') {
-      showMyNotifications = true;
-    }
-  }, [location.pathname]);
+    setIsMyNotifications(showMyNotifications || location.pathname === '/my-notifications');
+  }, [location.pathname, showMyNotifications]);
 
   // RTK Query hooks
   const { data: notifications = [], isLoading: notificationsLoading } = useGetNotificationsQuery(
-    { my: showMyNotifications },
+    { my: isMyNotifications },
     { pollingInterval: POLLING_INTERVAL }
   );
   const { data: favoritesData = [] } = useGetFavoritesQuery(undefined, 
@@ -77,66 +64,17 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   const [removeFavorite] = useRemoveFavoriteMutation();
   const [markAsRead] = useMarkAsReadMutation();
 
-  // Debug logging for read status
-  useEffect(() => {
-    console.log("Read status data:", { 
-      readStatusData, 
-      readStatusSuccess,
-      notificationCount: notifications?.length || 0
-    });
-  }, [readStatusData, readStatusSuccess, notifications]);
-
-  // Format read status data - ALL notifications are unread for new users by default
-  const readStatus = useMemo(() => {
-    // Create an object where all notifications are marked as unread by default
-    const status = {};
-    
-    // Mark all notifications as unread by default
-    if (notifications && notifications.length > 0) {
-      notifications.forEach(notification => {
-        status[notification.id] = false; // Mark all as unread by default
-      });
-    }
-    
-    // If readStatusData exists and is not empty, update the read status for those notifications
-    if (readStatusSuccess && readStatusData && readStatusData.length > 0) {
-      readStatusData.forEach(item => {
-        status[item.notification_id] = item.read;
-      });
-    }
-    
-    return status;
-  }, [readStatusData, notifications, readStatusSuccess]);
+  // Calculate read status
+  const readStatus = useMemo(() => 
+    calculateReadStatus(notifications, readStatusData, readStatusSuccess),
+    [notifications, readStatusData, readStatusSuccess]
+  );
 
   // Calculate unread count
-  const unreadCount = useMemo(() => {
-    if (notificationsLoading) return 0;
-    
-    // For new users with no readStatusData, all notifications are unread
-    if (notifications.length > 0 && (!readStatusData || readStatusData.length === 0)) {
-      return notifications.length;
-    }
-    
-    // Otherwise count notifications marked as not read in readStatus
-    return notifications.filter(n => readStatus[n.id] === false).length;
-  }, [notifications, readStatus, notificationsLoading, readStatusData]);
-
-  const categories = useMemo(() => [
-    { value: 'õppetöö', label: 'Õppetöö' },
-    { value: 'hindamine', label: 'Hindamine' },
-    { value: 'praktika', label: 'Praktika' },
-    { value: 'stipendium', label: 'Stipendium' },
-    { value: 'sündmused', label: 'Sündmused' },
-    { value: 'erakorralised', label: 'Erakorralised' },
-    { value: 'muu', label: 'Muu' },
-  ], []);
-
-  const priorities = useMemo(() => [
-    { value: 'kiire', label: 'Kiire' },
-    { value: 'kõrge', label: 'Kõrge' },
-    { value: 'tavaline', label: 'Tavaline' },
-    { value: 'madal', label: 'Madal' },
-  ], []);
+  const unreadCount = useMemo(() => 
+    calculateUnreadCount(notifications, readStatus, notificationsLoading, readStatusData),
+    [notifications, readStatus, notificationsLoading, readStatusData]
+  );
 
   // Combine dropdown outside click logic
   useEffect(() => {
@@ -182,11 +120,6 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
-
   const handleMarkAsRead = async (notificationId) => {
     try {
       await markAsRead(notificationId).unwrap();
@@ -202,8 +135,9 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     
     let result = [...notifications];
     
-    // Apply my notifications filter if enabled
-    if (showMyNotifications || location.pathname === '/my-notifications') {
+    // If we're already fetching my notifications from the API, no need to filter again
+    // Otherwise, apply my notifications filter if enabled through UI actions
+    if (!isMyNotifications && location.pathname === '/my-notifications') {
       result = result.filter(n => n.created_by === user?.id);
     }
     
@@ -242,7 +176,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     readStatus, 
     selectedPriorities, 
     selectedCategories, 
-    showMyNotifications, 
+    isMyNotifications, 
     user, 
     location.pathname,
     notificationsLoading,
@@ -254,45 +188,11 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     return filteredNotifications.filter(n => readStatus[n.id] === false).length;
   }, [filteredNotifications, readStatus]);
 
-  const getPageTitle = () => {
-    if (showMyNotifications || location.pathname === '/my-notifications') 
-      return 'Minu teated';
-    if (showFavoritesOnly || location.pathname === '/favorites') 
-      return 'Lemmikud';
-    if (filter === 'unread') 
-      return 'Lugemata teated';
-    return 'Teated';
-  };
-
-  // Get the current filter description
-  const getFilterDescription = () => {
-    let description = [];
-
-    if (showMyNotifications || location.pathname === '/my-notifications')
-      description.push('Minu teated');
-    else if (showFavoritesOnly || location.pathname === '/favorites')
-      description.push('Lemmikud');
-    else if (filter === 'unread')
-      description.push('Lugemata');
-
-    if (selectedCategories.length > 0) {
-      if (selectedCategories.length === 1) {
-        description.push(`Kategooria: ${categories.find(c => c.value === selectedCategories[0])?.label || selectedCategories[0]}`);
-      } else {
-        description.push(`${selectedCategories.length} kategooriat`);
-      }
-    }
-
-    if (selectedPriorities.length > 0) {
-      if (selectedPriorities.length === 1) {
-        description.push(`Prioriteet: ${priorities.find(p => p.value === selectedPriorities[0])?.label || selectedPriorities[0]}`);
-      } else {
-        description.push(`${selectedPriorities.length} prioriteeti`);
-      }
-    }
-
-    return description.length > 0 ? description.join(', ') : 'Kõik teated';
-  };
+  // Get filter description using helper function
+  const filterDescriptionText = useMemo(() => 
+    getFilterDescription(isMyNotifications, showFavoritesOnly, filter, location.pathname, selectedCategories, selectedPriorities),
+    [isMyNotifications, showFavoritesOnly, filter, location.pathname, selectedCategories, selectedPriorities]
+  );
 
   if (notificationsLoading) {
     return <div className="loading-message">Laen...</div>;
@@ -301,49 +201,31 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   return (
     <div className="notification-list">
       <div className="header-section">
-        <h2>{getPageTitle()}</h2>
-        <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div className="notification-count">
-              <span className="filter-description">{getFilterDescription()}</span>
-              <span className="count">{filteredNotifications.length}</span>
-              {filteredUnreadCount > 0 && (
-                <span className="unread-badge" title="Lugemata teateid">{filteredUnreadCount}</span>
-              )}
-            </div>
-          </div>
-          <MultiSelectDropdown
-            open={dropdownOpen}
-            setOpen={setDropdownOpen}
-            options={categories}
-            selected={selectedCategories}
-            setSelected={setSelectedCategories}
-            buttonLabel="Vali kategooriad"
-            dropdownRef={dropdownRef}
-          />
-          <MultiSelectDropdown
-            open={priorityDropdownOpen}
-            setOpen={setPriorityDropdownOpen}
-            options={priorities}
-            selected={selectedPriorities}
-            setSelected={setSelectedPriorities}
-            buttonLabel="Vali prioriteedid"
-            dropdownRef={priorityDropdownRef}
-          />
-        </div>
+        <h2>{getPageTitle(isMyNotifications, showFavoritesOnly, filter, location.pathname)}</h2>
+        <NotificationFilters
+          selectedCategories={selectedCategories}
+          setSelectedCategories={setSelectedCategories}
+          selectedPriorities={selectedPriorities}
+          setSelectedPriorities={setSelectedPriorities}
+          dropdownOpen={dropdownOpen}
+          setDropdownOpen={setDropdownOpen}
+          priorityDropdownOpen={priorityDropdownOpen}
+          setPriorityDropdownOpen={setPriorityDropdownOpen}
+          dropdownRef={dropdownRef}
+          priorityDropdownRef={priorityDropdownRef}
+          filteredCount={filteredNotifications.length}
+          filterDescription={filterDescriptionText}
+          unreadCount={filteredUnreadCount}
+        />
       </div>
+      
       {filteredNotifications.length === 0 ? (
-        <div className="no-notifications">
-          {showFavoritesOnly || location.pathname === '/favorites' ? (
-            <p>Lemmikute nimekiri on tühi</p>
-          ) : filter === 'unread' ? (
-            <p>Lugemata teateid ei ole</p>
-          ) : showMyNotifications || location.pathname === '/my-notifications' ? (
-            <p>Te ei ole veel ühtegi teadet loonud</p>
-          ) : (
-            <p>Teateid ei ole</p>
-          )}
-        </div>
+        <EmptyNotifications 
+          showFavoritesOnly={showFavoritesOnly} 
+          filter={filter} 
+          isMyNotifications={isMyNotifications} 
+          pathname={location.pathname} 
+        />
       ) : (
         <ul className="notifications">
           {filteredNotifications.map((notification) => (
@@ -355,7 +237,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
               readStatus={readStatus}
               onMarkAsRead={handleMarkAsRead}
               onToggleFavorite={toggleFavorite}
-              onDelete={(showMyNotifications || location.pathname === '/my-notifications') ? handleDelete : null}
+              onDelete={(isMyNotifications || location.pathname === '/my-notifications') ? handleDelete : null}
               isFavorite={favoritesData.some(f => f.notification_id === notification.id)}
             />
           ))}

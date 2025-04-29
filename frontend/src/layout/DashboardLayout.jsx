@@ -3,6 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../features/authSlice';
 import { useGetNotificationsQuery, useGetReadStatusQuery } from '../services/api';
+import ConfirmationModal from '../components/notifications/ConfirmationModal';
 import './styles/DashboardLayout.css';
 
 const DashboardLayout = ({ children }) => {
@@ -17,6 +18,7 @@ const DashboardLayout = ({ children }) => {
     if (location.search.includes('filter=unread')) return 'unread';
     return 'all';
   });
+  const [modalOpen, setModalOpen] = useState(false);
 
   // RTK Query hooks
   const { data: notifications = [], isLoading: notificationsLoading } = useGetNotificationsQuery({ my: false });
@@ -70,9 +72,18 @@ const DashboardLayout = ({ children }) => {
     ).length;
   }, [notifications, readStatus, notificationsLoading, readStatusData]);
 
-  const handleLogout = () => {
+  const handleLogoutRequest = () => {
+    setModalOpen(true);
+  };
+
+  const confirmLogout = () => {
     dispatch(logout());
     navigate('/login');
+    setModalOpen(false);
+  };
+  
+  const cancelLogout = () => {
+    setModalOpen(false);
   };
 
   const handleSidebarClick = (filter) => {
@@ -162,7 +173,7 @@ const DashboardLayout = ({ children }) => {
             )}
 
             <li>
-              <button onClick={handleLogout} className="sidebar-logout">
+              <button onClick={handleLogoutRequest} className="sidebar-logout">
                 Logi välja
               </button>
             </li>
@@ -182,6 +193,12 @@ const DashboardLayout = ({ children }) => {
           {childrenWithProps}
         </div>
       </div>
+      <ConfirmationModal
+        open={modalOpen}
+        message="Oled kindel, et soovid välja logida?"
+        onConfirm={confirmLogout}
+        onCancel={cancelLogout}
+      />
     </div>
   );
 };

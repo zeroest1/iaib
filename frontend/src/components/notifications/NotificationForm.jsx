@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import './styles/NotificationForm.css';
 import { useAddNotificationMutation } from '../../services/api';
+import NotificationFormFields from './NotificationFormFields';
 
 const NotificationForm = () => {
   const [formData, setFormData] = useState({
@@ -47,71 +48,14 @@ const NotificationForm = () => {
     <div className="notification-form">
       <h2>Lisa uus teade</h2>
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="title">Pealkiri</label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            className="form-input"
-            placeholder="Sisesta pealkiri"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="content">Sisu</label>
-          <textarea
-            id="content"
-            name="content"
-            value={formData.content}
-            onChange={handleChange}
-            className="form-textarea"
-            placeholder="Sisesta teate sisu"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="category">Kategooria</label>
-          <select
-            id="category"
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            className="form-select"
-            required
-          >
-            <option value="">Vali kategooria</option>
-            <option value="õppetöö">Õppetöö</option>
-            <option value="hindamine">Hindamine</option>
-            <option value="praktika">Praktika</option>
-            <option value="stipendium">Stipendium</option>
-            <option value="sündmused">Sündmused</option>
-            <option value="erakorralised">Erakorralised</option>
-            <option value="muu">Muu</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label htmlFor="priority">Prioriteet</label>
-          <select
-            id="priority"
-            name="priority"
-            value={formData.priority}
-            onChange={handleChange}
-            className="form-select"
-            required
-          >
-            <option value="kiire">Kiire</option>
-            <option value="kõrge">Kõrge</option>
-            <option value="tavaline">Tavaline</option>
-            <option value="madal">Madal</option>
-          </select>
-        </div>
-        {error && <p className="error-message">{error}</p>}
-        <button type="submit" className="submit-button" disabled={isLoading}>
-          {isLoading ? 'Lisan teadet...' : 'Lisa teade'}
-        </button>
+        <NotificationFormFields
+          formData={formData}
+          handleChange={handleChange}
+          error={error}
+          isSubmitting={isLoading}
+          submitButtonText="Lisa teade"
+          loadingText="Lisan teadet..."
+        />
       </form>
     </div>
   );
