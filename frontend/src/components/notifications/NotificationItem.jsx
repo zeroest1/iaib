@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { MdDelete, MdEdit } from 'react-icons/md';
 
 const NotificationItem = ({
   notification,
@@ -47,14 +48,16 @@ const NotificationItem = ({
                 className="edit-button"
                 title="Muuda teadet"
               >
-                Muuda
+                <MdEdit />
+                <span>Muuda</span>
               </Link>
               <button
                 onClick={() => onDelete(notification.id)}
                 className="delete-button"
                 title="Kustuta teade"
               >
-                Kustuta
+                <MdDelete />
+                <span>Kustuta</span>
               </button>
             </div>
           )}

@@ -1,3 +1,4 @@
+// Import constants for notification categories and priorities
 import { NOTIFICATION_CATEGORIES, NOTIFICATION_PRIORITIES } from './constants';
 
 /**
@@ -53,35 +54,47 @@ export const getPageTitle = (isMyNotifications, showFavoritesOnly, filter, pathn
 };
 
 /**
- * Get human-readable description of current filters
+ * Generates a human-readable description of current filters
  */
 export const getFilterDescription = (isMyNotifications, showFavoritesOnly, filter, pathname, selectedCategories, selectedPriorities) => {
-  let description = [];
-
-  if (isMyNotifications || pathname === '/my-notifications')
-    description.push('Minu teated');
-  else if (showFavoritesOnly || pathname === '/favorites')
-    description.push('Lemmikud');
-  else if (filter === 'unread')
-    description.push('Lugemata');
-
-  if (selectedCategories.length > 0) {
+  const parts = [];
+  
+  // Filter type
+  if (filter === 'unread' || pathname.includes('unread')) {
+    parts.push('Lugemata');
+  }
+  
+  if (showFavoritesOnly || pathname.includes('favorites')) {
+    parts.push('Lemmikud');
+  }
+  
+  if (isMyNotifications || pathname.includes('my-notifications')) {
+    parts.push('Minu loodud');
+  }
+  
+  // Categories
+  if (selectedCategories && selectedCategories.length > 0) {
     if (selectedCategories.length === 1) {
-      description.push(`Kategooria: ${NOTIFICATION_CATEGORIES.find(c => c.value === selectedCategories[0])?.label || selectedCategories[0]}`);
+      // Get the proper label from constants
+      const categoryLabel = NOTIFICATION_CATEGORIES.find(c => c.value === selectedCategories[0])?.label || selectedCategories[0];
+      parts.push(`Kategooria: ${categoryLabel}`);
     } else {
-      description.push(`${selectedCategories.length} kategooriat`);
+      parts.push(`Kategooriad: ${selectedCategories.length}`);
     }
   }
-
-  if (selectedPriorities.length > 0) {
+  
+  // Priorities
+  if (selectedPriorities && selectedPriorities.length > 0) {
     if (selectedPriorities.length === 1) {
-      description.push(`Prioriteet: ${NOTIFICATION_PRIORITIES.find(p => p.value === selectedPriorities[0])?.label || selectedPriorities[0]}`);
+      // Get the proper label from constants
+      const priorityLabel = NOTIFICATION_PRIORITIES.find(p => p.value === selectedPriorities[0])?.label || selectedPriorities[0];
+      parts.push(`Prioriteet: ${priorityLabel}`);
     } else {
-      description.push(`${selectedPriorities.length} prioriteeti`);
+      parts.push(`Prioriteedid: ${selectedPriorities.length}`);
     }
   }
-
-  return description.length > 0 ? description.join(', ') : 'Kõik teated';
+  
+  return parts.length > 0 ? parts.join(', ') : '';
 };
 
 /**

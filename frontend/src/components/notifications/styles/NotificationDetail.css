@@ -1,56 +1,78 @@
 .notification-detail {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .notification-detail h2 {
-  color: #e4067e;
-  margin-bottom: 20px;
-  text-align: center;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+  font-weight: 600;
 }
 
 .notification-content {
-  background-color: #ffffff;
-  border: 1px solid #e4067e;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #444;
 }
 
 .notification-meta {
-  color: #666;
-  font-size: 14px;
-  margin-top: 15px;
-  padding-top: 15px;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
   border-top: 1px solid #eee;
+  font-size: 0.9rem;
+  color: #666;
 }
 
-.button-group {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 20px;
+.notification-meta p {
+  margin: 0.5rem 0;
 }
 
 .action-button {
   background-color: #e4067e;
-  color: #ffffff;
+  color: white;
   border: none;
   border-radius: 4px;
-  padding: 10px 20px;
+  padding: 0.5rem 1rem;
+  margin-right: 0.75rem;
   cursor: pointer;
+  font-weight: 500;
   text-decoration: none;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
+  display: inline-block;
+  transition: background-color 0.2s;
 }
 
 .action-button:hover {
   background-color: #c0056a;
 }
 
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button-group {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.error-message {
+  color: #e74c3c;
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.1rem;
+}
+
 .loading-message {
   text-align: center;
+  padding: 2rem;
   color: #666;
-  font-style: italic;
+  font-size: 1.1rem;
 } 

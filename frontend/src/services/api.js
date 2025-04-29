@@ -46,7 +46,7 @@ const axiosBaseQuery =
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: axiosBaseQuery({ baseUrl: API_BASE_URL }),
-  tagTypes: ['Auth', 'Notifications', 'Favorites', 'ReadStatus'],
+  tagTypes: ['Auth', 'Notifications', 'Favorites', 'ReadStatus', 'Groups', 'UserGroups'],
   endpoints: (builder) => ({
     login: builder.mutation({
       query: (credentials) => ({ url: '/auth/login', method: 'post', data: credentials }),
@@ -107,6 +107,20 @@ export const api = createApi({
       query: (notificationId) => ({ url: `/notifications/${notificationId}/read`, method: 'post' }),
       invalidatesTags: ['ReadStatus', 'Notifications'],
     }),
+    getGroups: builder.query({
+      query: () => ({ url: '/notifications/groups', method: 'get' }),
+      providesTags: ['Groups'],
+      keepUnusedDataFor: 30,
+    }),
+    getUserGroups: builder.query({
+      query: () => ({ url: '/notifications/user-groups', method: 'get' }),
+      providesTags: ['UserGroups'],
+      keepUnusedDataFor: 30,
+    }),
+    getNotificationGroups: builder.query({
+      query: (notificationId) => ({ url: `/notifications/${notificationId}/groups`, method: 'get' }),
+      providesTags: (result, error, id) => [{ type: 'Groups', id }],
+    }),
   }),
 });
 
@@ -124,4 +138,7 @@ export const {
   useRemoveFavoriteMutation,
   useGetReadStatusQuery,
   useMarkAsReadMutation,
+  useGetGroupsQuery,
+  useGetUserGroupsQuery,
+  useGetNotificationGroupsQuery,
 } = api; 

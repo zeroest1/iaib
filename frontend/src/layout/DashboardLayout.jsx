@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../features/authSlice';
-import { useGetNotificationsQuery, useGetReadStatusQuery } from '../services/api';
+import { useGetNotificationsQuery, useGetReadStatusQuery, useGetUserGroupsQuery } from '../services/api';
 import ConfirmationModal from '../components/notifications/ConfirmationModal';
 import './styles/DashboardLayout.css';
+import { MdOutlinePostAdd } from 'react-icons/md';
 
 const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
@@ -27,6 +28,25 @@ const DashboardLayout = ({ children }) => {
     isLoading: readStatusLoading,
     isSuccess: readStatusSuccess 
   } = useGetReadStatusQuery();
+  const { data: userGroups = [], isLoading: userGroupsLoading } = useGetUserGroupsQuery();
+
+  // Format user group information
+  const formatUserGroupInfo = () => {
+    if (!userGroups || userGroups.length === 0) {
+      return 'Puuduvad';
+    }
+    const roleGroups = userGroups.filter(g => g.is_role_group);
+    const regularGroups = userGroups.filter(g => !g.is_role_group);
+    
+    let result = [];
+    if (roleGroups.length > 0) {
+      result.push(`Roll: ${roleGroups.map(g => g.name).join(', ')}`);
+    }
+    if (regularGroups.length > 0) {
+      result.push(`Grupid: ${regularGroups.map(g => g.name).join(', ')}`);
+    }
+    return result.join(' | ');
+  };
 
   // Update active filter when location changes
   useEffect(() => {
@@ -93,16 +113,15 @@ const DashboardLayout = ({ children }) => {
     else if (filter === 'all') navigate('/');
   };
 
-  // Redirect to home if user tries to access program manager routes
+  // Check if the user is trying to access a route they don't have permission for
+  // Redirect to home if user tries to access programmijuht routes
   useEffect(() => {
     if (user && user.role !== 'programmijuht') {
-      if (location.pathname === '/my-notifications' || 
-          location.pathname === '/add' || 
-          location.pathname.includes('/edit')) {
+      if (location.pathname.includes('/edit') || location.pathname === '/add-notification') {
         navigate('/');
       }
     }
-  }, [location.pathname, user, navigate]);
+  }, [location, user, navigate]);
 
   // Clone the children element and pass the activeFilter prop
   const childrenWithProps = React.Children.map(children, child => {
@@ -150,7 +169,7 @@ const DashboardLayout = ({ children }) => {
               </button>
             </li>
 
-            {/* Program manager specific menu items */}
+            {/* Programmijuht specific menu items */}
             {user?.role === 'programmijuht' && (
               <>
                 <li>
@@ -162,11 +181,9 @@ const DashboardLayout = ({ children }) => {
                   </Link>
                 </li>
                 <li>
-                  <Link 
-                    to="/add" 
-                    className={location.pathname === '/add' ? 'sidebar-active' : ''}
-                  >
-                    Lisa teade
+                  <Link to="/add-notification">
+                    <MdOutlinePostAdd />
+                    Lisa uus teade
                   </Link>
                 </li>
               </>
@@ -184,8 +201,13 @@ const DashboardLayout = ({ children }) => {
         <header className="dashboard-header">
           {user && (
             <div className="user-info">
-              <span className="user-name">{user.name}</span>
-              <span className="user-role">({user.role === 'programmijuht' ? 'Programmijuht' : 'Õpilane'})</span>
+              <div className="user-details">
+                <span className="user-name">{user.name}</span>
+                <span className="user-role">({user.role === 'programmijuht' ? 'Programmijuht' : 'Tudeng'})</span>
+              </div>
+              <div className="user-groups">
+                {userGroupsLoading ? 'Laen gruppe...' : formatUserGroupInfo()}
+              </div>
             </div>
           )}
         </header>

@@ -24,13 +24,30 @@ pool.connect((err, client, release) => {
 const createTables = async () => {
   try {
     await pool.query(`
+      -- groups table
+      CREATE TABLE IF NOT EXISTS groups (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        description TEXT,
+        is_role_group BOOLEAN DEFAULT false
+      );
+
       -- users table
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
         email VARCHAR(100) UNIQUE NOT NULL,
-        role VARCHAR(20) NOT NULL CHECK (role IN ('student', 'programmijuht')),
+        role VARCHAR(20) NOT NULL CHECK (role IN ('tudeng', 'programmijuht')),
         password VARCHAR(255) NOT NULL
+      );
+
+      -- user_groups table (many-to-many relationship)
+      CREATE TABLE IF NOT EXISTS user_groups (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        group_id INTEGER REFERENCES groups(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, group_id)
       );
 
       -- notifications table
@@ -45,12 +62,30 @@ const createTables = async () => {
         created_by INTEGER REFERENCES users(id)
       );
 
+      -- notification_groups table (many-to-many relationship)
+      CREATE TABLE IF NOT EXISTS notification_groups (
+        id SERIAL PRIMARY KEY,
+        notification_id INTEGER REFERENCES notifications(id) ON DELETE CASCADE,
+        group_id INTEGER REFERENCES groups(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(notification_id, group_id)
+      );
+
       -- favorites table
       CREATE TABLE IF NOT EXISTS favorites (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id),
         notification_id INTEGER REFERENCES notifications(id) ON DELETE CASCADE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, notification_id)
+      );
+
+      -- notification_read_status table
+      CREATE TABLE IF NOT EXISTS notification_read_status (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        notification_id INTEGER REFERENCES notifications(id),
+        read BOOLEAN DEFAULT false,
         UNIQUE(user_id, notification_id)
       );
     `);

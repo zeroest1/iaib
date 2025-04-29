@@ -31,10 +31,10 @@ function App() {
             <Route path="/notifications/:id" element={<DashboardLayout><NotificationDetail /></DashboardLayout>} />
           </Route>
           
-          {/* Program manager specific routes */}
+          {/* Programmijuht specific routes */}
           <Route element={<RoleProtectedRoute allowedRoles={['programmijuht']} />}>
             <Route path="/my-notifications" element={<DashboardLayout><NotificationList showMyNotifications={true} /></DashboardLayout>} />
-            <Route path="/add" element={<DashboardLayout><NotificationForm /></DashboardLayout>} />
+            <Route path="/add-notification" element={<DashboardLayout><NotificationForm /></DashboardLayout>} />
             <Route path="/notifications/:id/edit" element={<DashboardLayout><NotificationEdit /></DashboardLayout>} />
           </Route>
         </Routes>

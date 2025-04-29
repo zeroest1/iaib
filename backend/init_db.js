@@ -20,7 +20,7 @@ async function initDatabase() {
     
     console.log('Database initialized successfully!');
     console.log('Created two users:');
-    console.log('1. Student: opilane@example.com');
+    console.log('1. Tudeng: opilane@example.com');
     console.log('2. Programmijuht: programmijuht@example.com');
   } catch (err) {
     console.error('Error initializing database:', err);

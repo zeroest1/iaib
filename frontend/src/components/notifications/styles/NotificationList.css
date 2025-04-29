@@ -176,6 +176,11 @@ h2 {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .delete-button:hover {
@@ -342,7 +347,9 @@ h2 {
   transition: all 0.3s ease;
   text-decoration: none;
   font-size: 0.9rem;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .edit-button:hover {
@@ -366,11 +373,14 @@ h2 {
   padding: 0.5rem 1rem;
   border-radius: 20px;
   border: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .notification-count .filter-description {
   color: #333;
   font-weight: 500;
+  margin-right: 0.5rem;
 }
 
 .notification-count .count {
@@ -379,7 +389,9 @@ h2 {
   font-weight: 700;
   padding: 0.1rem 0.5rem;
   border-radius: 12px;
-  margin-left: 0.5rem;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .notification-count .unread-badge {

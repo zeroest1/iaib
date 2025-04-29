@@ -33,25 +33,61 @@ router.post('/login', async (req, res) => {
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, groups } = req.body;
   if (!name || !email || !password || !role) {
     return res.status(400).json({ error: 'All fields are required' });
   }
-  if (!['student', 'programmijuht'].includes(role)) {
+  if (!['tudeng', 'programmijuht'].includes(role)) {
     return res.status(400).json({ error: 'Invalid role' });
   }
+  
   try {
+    // Start transaction
+    await pool.query('BEGIN');
+    
+    // Check if email already exists
     const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) {
+      await pool.query('ROLLBACK');
       return res.status(409).json({ error: 'Email already registered' });
     }
+    
+    // Hash password
     const hashed = await bcrypt.hash(password, 10);
-    await pool.query(
-      'INSERT INTO users (name, email, role, password) VALUES ($1, $2, $3, $4)',
+    
+    // Insert user
+    const userResult = await pool.query(
+      'INSERT INTO users (name, email, role, password) VALUES ($1, $2, $3, $4) RETURNING id',
       [name, email, role, hashed]
     );
+    
+    const userId = userResult.rows[0].id;
+    
+    // Add user to role-based group
+    const roleGroupId = role === 'tudeng' ? 1 : 2; // 1 for tudeng, 2 for programmijuht
+    await pool.query(
+      'INSERT INTO user_groups (user_id, group_id) VALUES ($1, $2)',
+      [userId, roleGroupId]
+    );
+    
+    // Add user to selected groups if provided
+    if (groups && groups.length > 0) {
+      // Use a prepared statement with multiple values
+      const groupValues = groups.map((groupId, index) => `($1, $${index + 2})`).join(', ');
+      const groupParams = [userId, ...groups];
+      
+      await pool.query(
+        `INSERT INTO user_groups (user_id, group_id) VALUES ${groupValues} ON CONFLICT DO NOTHING`,
+        groupParams
+      );
+    }
+    
+    // Commit transaction
+    await pool.query('COMMIT');
+    
     res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {
+    await pool.query('ROLLBACK');
     console.error('Registration error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }

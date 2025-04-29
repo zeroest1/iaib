@@ -1,50 +1,115 @@
 .register-form {
-  max-width: 400px;
-  margin: 2rem auto;
-  padding: 24px;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: white;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  font-family: 'Montserrat', sans-serif;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .register-form h2 {
+  margin-top: 0;
   margin-bottom: 1.5rem;
+  color: #333;
+  text-align: center;
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 1.5rem;
 }
 
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #444;
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 8px;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
   border-radius: 4px;
-  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #e4067e;
+  box-shadow: 0 0 0 2px rgba(228, 6, 126, 0.2);
 }
 
 .error-message {
-  color: red;
-  margin-bottom: 12px;
+  color: #e4067e;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: rgba(228, 6, 126, 0.1);
+  border-radius: 4px;
 }
 
 .submit-button {
   width: 100%;
-  padding: 10px;
-  background: #e4067e;
-  color: #fff;
+  padding: 0.8rem;
+  background-color: #e4067e;
+  color: white;
   border: none;
   border-radius: 4px;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background-color 0.2s;
 }
 
 .submit-button:hover {
-  background: #c9066f;
+  background-color: #c7066e;
+}
+
+.submit-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Group selection styles */
+.groups-container {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.group-checkbox {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.group-checkbox:hover {
+  background-color: #f5f5f5;
+}
+
+.group-checkbox input[type="checkbox"] {
+  width: auto;
+  margin-right: 0.5rem;
+}
+
+.group-checkbox label {
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.group-description {
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+  margin-left: 0.25rem;
 } 
