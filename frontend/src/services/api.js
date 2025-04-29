@@ -61,6 +61,10 @@ export const api = createApi({
       providesTags: ['Auth'],
       keepUnusedDataFor: 30,
     }),
+    getRegistrationGroups: builder.query({
+      query: () => ({ url: '/auth/groups', method: 'get' }),
+      keepUnusedDataFor: 60,
+    }),
     getNotifications: builder.query({
       query: ({ my = false }) => ({ url: my ? '/notifications/my' : '/notifications', method: 'get' }),
       providesTags: ['Notifications'],
@@ -128,6 +132,7 @@ export const {
   useLoginMutation,
   useRegisterMutation,
   useGetMeQuery,
+  useGetRegistrationGroupsQuery,
   useGetNotificationsQuery,
   useGetNotificationQuery,
   useAddNotificationMutation,

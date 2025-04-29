@@ -6,6 +6,18 @@ const bcrypt = require('bcryptjs');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key';
 
+// GET /api/auth/groups - Get all non-role-based groups for registration
+router.get('/groups', async (req, res) => {
+  try {
+    // Get only regular groups (where is_role_group is false)
+    const result = await pool.query('SELECT * FROM groups WHERE is_role_group = false ORDER BY name');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching groups for registration:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;

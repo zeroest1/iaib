@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRegisterMutation, useLoginMutation, useGetMeQuery, useGetGroupsQuery } from '../../services/api';
+import { useRegisterMutation, useLoginMutation, useGetMeQuery, useGetRegistrationGroupsQuery } from '../../services/api';
 import './styles/Register.css';
 
 const Register = () => {
@@ -17,10 +17,10 @@ const Register = () => {
   const [register, { isLoading: isRegisterLoading }] = useRegisterMutation();
   const [login] = useLoginMutation();
   const { refetch } = useGetMeQuery();
-  const { data: groups = [], isLoading: groupsLoading } = useGetGroupsQuery();
+  const { data: groups = [], isLoading: groupsLoading } = useGetRegistrationGroupsQuery();
 
-  // Filter out role-specific groups (is_role_group = true)
-  const regularGroups = groups.filter(group => !group.is_role_group);
+  // No need to filter groups anymore as we're only getting non-role groups from the API
+  const regularGroups = groups;
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
