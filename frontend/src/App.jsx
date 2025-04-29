@@ -20,11 +20,15 @@ function App() {
             <Route path="/register" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
             <Route element={<ProtectedRoute />}>
+              {/* Main notification views - same for both roles */}
               <Route path="/" element={<DashboardLayout><NotificationList /></DashboardLayout>} />
-              <Route path="/add" element={<DashboardLayout><NotificationForm /></DashboardLayout>} />
-              <Route path="/notifications/:id" element={<DashboardLayout><NotificationDetail /></DashboardLayout>} />
-              <Route path="/notifications/:id/edit" element={<DashboardLayout><NotificationEdit /></DashboardLayout>} />
               <Route path="/favorites" element={<DashboardLayout><NotificationList showFavoritesOnly={true} /></DashboardLayout>} />
+              <Route path="/notifications/:id" element={<DashboardLayout><NotificationDetail /></DashboardLayout>} />
+              
+              {/* Program manager specific routes */}
+              <Route path="/my-notifications" element={<DashboardLayout><NotificationList showMyNotifications={true} /></DashboardLayout>} />
+              <Route path="/add" element={<DashboardLayout><NotificationForm /></DashboardLayout>} />
+              <Route path="/notifications/:id/edit" element={<DashboardLayout><NotificationEdit /></DashboardLayout>} />
             </Route>
           </Routes>
         </div>

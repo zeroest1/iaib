@@ -25,7 +25,7 @@ const ConfirmationModal = ({ open, message, onConfirm, onCancel }) => {
   );
 };
 
-const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavoritesChange, filter = 'all', onUnreadChange }) => {
+const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavoritesChange, filter = 'all', onUnreadChange, showMyNotifications = false }) => {
   const [notifications, setNotifications] = useState([]);
   const [favoritesList, setFavoritesList] = useState([]);
   const [userRole, setUserRole] = useState(null);
@@ -74,15 +74,11 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   useEffect(() => {
     if (!userRole) return;
     fetchNotifications();
-    if (userRole === 'student') {
-      fetchFavorites();
-    }
+    fetchFavorites();
     fetchReadStatus();
     const interval = setInterval(() => {
       fetchNotifications();
-      if (userRole === 'student') {
-        fetchFavorites();
-      }
+      fetchFavorites();
     }, POLLING_INTERVAL);
     return () => clearInterval(interval);
     // eslint-disable-next-line
@@ -122,7 +118,14 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
 
   const fetchNotifications = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/notifications`);
+      const token = localStorage.getItem('token');
+      const url = showMyNotifications 
+        ? `${API_BASE_URL}/notifications/my`
+        : `${API_BASE_URL}/notifications`;
+      
+      const res = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setNotifications(res.data);
     } catch (err) {
       console.error('Viga teadete laadimisel:', err);
@@ -160,7 +163,10 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     setModalMessage('Oled kindel, et soovid selle teate kustutada?');
     setModalAction(() => async () => {
       try {
-        await axios.delete(`${API_BASE_URL}/notifications/${id}`);
+        const token = localStorage.getItem('token');
+        await axios.delete(`${API_BASE_URL}/notifications/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setNotifications(notifications.filter((n) => n.id !== id));
       } catch (err) {
         console.error('Viga kustutamisel:', err);
@@ -205,30 +211,49 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
       });
       setReadStatus(prev => ({ ...prev, [notificationId]: true }));
       if (onUnreadChange) onUnreadChange();
-    } catch (err) {}
+      // Refresh notifications to update the unread count
+      fetchNotifications();
+    } catch (err) {
+      console.error('Viga teate lugemise märkimisel:', err);
+    }
   };
 
   // Memoize filtered notifications
   const filteredNotifications = useMemo(() => {
-    let result = showFavoritesOnly
-      ? notifications.filter(n => favoritesList.some(f => f.notification_id === n.id))
-      : notifications;
+    let result = notifications;
+    
+    // Apply my notifications filter if enabled
+    if (showMyNotifications) {
+      result = result.filter(n => n.created_by === userId);
+    }
+    
+    // Apply favorites filter if enabled
+    if (showFavoritesOnly) {
+      result = result.filter(n => favoritesList.some(f => f.notification_id === n.id));
+    }
+    
+    // Apply unread filter if enabled
     if (filter === 'unread') {
       result = result.filter(n => !readStatus[n.id]);
     }
+    
+    // Apply priority filters
     if (selectedPriorities.length > 0) {
       result = result.filter(n => selectedPriorities.includes(n.priority));
     }
+    
+    // Apply category filters
     if (selectedCategories.length > 0) {
       result = result.filter(n => selectedCategories.includes(n.category));
     }
+    
     return result;
-  }, [notifications, favoritesList, showFavoritesOnly, filter, readStatus, selectedPriorities, selectedCategories]);
+  }, [notifications, favoritesList, showFavoritesOnly, filter, readStatus, selectedPriorities, selectedCategories, showMyNotifications, userId]);
 
   return (
     <div className="notification-list">
       <div className="header-section">
-        <h2>Teated</h2>
+        <h2>{showMyNotifications ? 'Minu teated' : 'Teated'}</h2>
         <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
           <MultiSelectDropdown
             open={dropdownOpen}
@@ -248,7 +273,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
             buttonLabel="Vali prioriteedid"
             dropdownRef={priorityDropdownRef}
           />
-          {userRole === 'programmijuht' && (
+          {userRole === 'programmijuht' && !showMyNotifications && (
             <button 
               onClick={() => navigate('/add')} 
               className="add-button"
@@ -258,13 +283,20 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
           )}
         </div>
       </div>
-
       {filteredNotifications.length === 0 ? (
-        <p className="empty-message">
-          Ühtegi teadet ei ole.
-        </p>
+        <div className="no-notifications">
+          {showFavoritesOnly ? (
+            <p>Lemmikute nimekiri on tühi</p>
+          ) : filter === 'unread' ? (
+            <p>Lugemata teateid ei ole</p>
+          ) : showMyNotifications ? (
+            <p>Te ei ole veel ühtegi teadet loonud</p>
+          ) : (
+            <p>Teateid ei ole</p>
+          )}
+        </div>
       ) : (
-        <ul>
+        <ul className="notifications">
           {filteredNotifications.map((notification) => (
             <NotificationItem
               key={notification.id}
@@ -274,17 +306,16 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
               readStatus={readStatus}
               onMarkAsRead={markAsRead}
               onToggleFavorite={toggleFavorite}
-              onDelete={handleDelete}
+              onDelete={showMyNotifications ? handleDelete : null}
               isFavorite={favoritesList.some(f => f.notification_id === notification.id)}
             />
           ))}
         </ul>
       )}
-
       <ConfirmationModal
         open={modalOpen}
         message={modalMessage}
-        onConfirm={() => { if (modalAction) modalAction(); }}
+        onConfirm={modalAction}
         onCancel={() => setModalOpen(false)}
       />
     </div>

@@ -104,7 +104,8 @@ const DashboardLayout = ({ children }) => {
   const handleSidebarClick = (filter) => {
     setActiveFilter(filter);
     if (filter === 'favorites') navigate('/favorites');
-    else navigate('/');
+    else if (filter === 'unread') navigate('/');
+    else if (filter === 'all') navigate('/');
   };
 
   const refreshFavorites = () => {
@@ -121,27 +122,59 @@ const DashboardLayout = ({ children }) => {
         <div className="sidebar-title">Teavitussüsteem</div>
         <nav>
           <ul>
-            {user && user.role === 'student' && (
-              <>
-                <li>
-                  <button
-                    className={activeFilter === 'all' ? 'sidebar-active' : ''}
-                    onClick={() => handleSidebarClick('all')}
-                  >
-                    Kõik teated ({allNotifications.length})
-                  </button>
-                </li>
-                <li><button className={activeFilter === 'unread' ? 'sidebar-active' : ''} onClick={() => handleSidebarClick('unread')}>Lugemata ({unread.length})</button></li>
-                <li><button className={activeFilter === 'favorites' ? 'sidebar-active' : ''} onClick={() => handleSidebarClick('favorites')}>Lemmikud ({favorites.length})</button></li>
-              </>
-            )}
+            {/* Common menu items for both roles */}
+            <li>
+              <button
+                className={activeFilter === 'all' ? 'sidebar-active' : ''}
+                onClick={() => handleSidebarClick('all')}
+              >
+                Teated ({allNotifications.length})
+              </button>
+            </li>
+            <li>
+              <button 
+                className={activeFilter === 'unread' ? 'sidebar-active' : ''} 
+                onClick={() => handleSidebarClick('unread')}
+              >
+                Lugemata ({unread.length})
+              </button>
+            </li>
+            <li>
+              <button 
+                className={activeFilter === 'favorites' ? 'sidebar-active' : ''} 
+                onClick={() => handleSidebarClick('favorites')}
+              >
+                Lemmikud ({favorites.length})
+              </button>
+            </li>
+
+            {/* Program manager specific menu items */}
             {user && user.role === 'programmijuht' && (
               <>
-                <li><Link to="/">Teated</Link></li>
-                <li><Link to="/add">Lisa teade</Link></li>
+                <li>
+                  <Link 
+                    to="/my-notifications" 
+                    className={location.pathname === '/my-notifications' ? 'sidebar-active' : ''}
+                  >
+                    Minu teated
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    to="/add" 
+                    className={location.pathname === '/add' ? 'sidebar-active' : ''}
+                  >
+                    Lisa teade
+                  </Link>
+                </li>
               </>
             )}
-            <li><button onClick={handleLogout} className="sidebar-logout">Logi välja</button></li>
+
+            <li>
+              <button onClick={handleLogout} className="sidebar-logout">
+                Logi välja
+              </button>
+            </li>
           </ul>
         </nav>
       </aside>
@@ -155,15 +188,27 @@ const DashboardLayout = ({ children }) => {
           )}
         </header>
         <div className="dashboard-children">
-          {user && user.role === 'student' ? (
-            location.pathname === '/' ? (
-              <NotificationList filter={activeFilter} onFavoritesChange={refreshFavorites} onUnreadChange={refreshUnread} />
-            ) : location.pathname === '/favorites' ? (
-              <NotificationList showFavoritesOnly={true} onFavoritesChange={refreshFavorites} onUnreadChange={refreshUnread} />
-            ) : (
-              children
-            )
-          ) : children}
+          {location.pathname === '/' ? (
+            <NotificationList 
+              filter={activeFilter} 
+              onFavoritesChange={refreshFavorites} 
+              onUnreadChange={refreshUnread} 
+            />
+          ) : location.pathname === '/favorites' ? (
+            <NotificationList 
+              showFavoritesOnly={true} 
+              onFavoritesChange={refreshFavorites} 
+              onUnreadChange={refreshUnread} 
+            />
+          ) : location.pathname === '/my-notifications' ? (
+            <NotificationList 
+              showMyNotifications={true}
+              onFavoritesChange={refreshFavorites} 
+              onUnreadChange={refreshUnread} 
+            />
+          ) : (
+            children
+          )}
         </div>
       </div>
       <ConfirmationModal
