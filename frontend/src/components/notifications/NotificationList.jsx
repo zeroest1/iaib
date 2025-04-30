@@ -1,5 +1,5 @@
 // src/components/NotificationList.jsx
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import './styles/NotificationList.css';
@@ -21,7 +21,8 @@ import {
   useDeleteNotificationMutation,
   useAddFavoriteMutation,
   useRemoveFavoriteMutation,
-  useMarkAsReadMutation
+  useMarkAsReadMutation,
+  useSearchNotificationsQuery
 } from '../../services/api';
 
 const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavoritesChange, filter = 'all', onUnreadChange, showMyNotifications = false }) => {
@@ -30,6 +31,8 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
   const [selectedPriorities, setSelectedPriorities] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState(null);
@@ -46,34 +49,63 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     setIsMyNotifications(showMyNotifications || location.pathname === '/my-notifications');
   }, [location.pathname, showMyNotifications]);
 
+  // Debounce search term to avoid too many API calls
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms delay
+    
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+  
+  // Determine which query to use based on whether we have a search term
+  const useSearchQuery = debouncedSearchTerm.trim().length > 0;
+  
   // RTK Query hooks
   const { data: notifications = [], isLoading: notificationsLoading } = useGetNotificationsQuery(
     { my: isMyNotifications },
-    { pollingInterval: POLLING_INTERVAL }
+    { 
+      pollingInterval: useSearchQuery ? 0 : POLLING_INTERVAL, // Disable polling during search
+      skip: useSearchQuery
+    }
   );
+  
+  const { data: searchResults = [], isLoading: searchLoading } = useSearchNotificationsQuery(
+    debouncedSearchTerm, 
+    { skip: !useSearchQuery }
+  );
+  
   const { data: favoritesData = [] } = useGetFavoritesQuery(undefined, 
     { pollingInterval: POLLING_INTERVAL }
   );
+  
   const { 
     data: readStatusData = [], 
     isLoading: readStatusLoading,
     isSuccess: readStatusSuccess 
   } = useGetReadStatusQuery();
+  
   const [deleteNotification] = useDeleteNotificationMutation();
   const [addFavorite] = useAddFavoriteMutation();
   const [removeFavorite] = useRemoveFavoriteMutation();
   const [markAsRead] = useMarkAsReadMutation();
 
+  // Use search results if we're searching, otherwise use regular notifications
+  const currentNotifications = useSearchQuery ? searchResults : notifications;
+  const isLoading = useSearchQuery ? searchLoading : notificationsLoading;
+
   // Calculate read status
   const readStatus = useMemo(() => 
-    calculateReadStatus(notifications, readStatusData, readStatusSuccess),
-    [notifications, readStatusData, readStatusSuccess]
+    calculateReadStatus(currentNotifications, readStatusData, readStatusSuccess),
+    [currentNotifications, readStatusData, readStatusSuccess]
   );
 
   // Calculate unread count
   const unreadCount = useMemo(() => 
-    calculateUnreadCount(notifications, readStatus, notificationsLoading, readStatusData),
-    [notifications, readStatus, notificationsLoading, readStatusData]
+    calculateUnreadCount(currentNotifications, readStatus, isLoading, readStatusData),
+    [currentNotifications, readStatus, isLoading, readStatusData]
   );
 
   // Combine dropdown outside click logic
@@ -131,14 +163,17 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
 
   // Memoize filtered notifications
   const filteredNotifications = useMemo(() => {
-    if (notificationsLoading) return [];
+    if (isLoading) return [];
     
-    let result = [...notifications];
+    let result = [...currentNotifications];
     
-    // If we're already fetching my notifications from the API, no need to filter again
-    // Otherwise, apply my notifications filter if enabled through UI actions
-    if (!isMyNotifications && location.pathname === '/my-notifications') {
-      result = result.filter(n => n.created_by === user?.id);
+    // For search results we don't need to filter by path condition as the API already handles that
+    if (!useSearchQuery) {
+      // If we're already fetching my notifications from the API, no need to filter again
+      // Otherwise, apply my notifications filter if enabled through UI actions
+      if (!isMyNotifications && location.pathname === '/my-notifications') {
+        result = result.filter(n => n.created_by === user?.id);
+      }
     }
     
     // Apply favorites filter if enabled
@@ -167,9 +202,11 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
       result = result.filter(n => selectedCategories.includes(n.category));
     }
     
+    // When using the search endpoint, we don't need to filter by search term client-side
+    
     return result;
   }, [
-    notifications, 
+    currentNotifications, 
     favoritesData, 
     showFavoritesOnly, 
     filter, 
@@ -179,8 +216,9 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     isMyNotifications, 
     user, 
     location.pathname,
-    notificationsLoading,
-    readStatusData
+    isLoading,
+    readStatusData,
+    useSearchQuery
   ]);
 
   // Calculate filtered unread count
@@ -190,11 +228,11 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
 
   // Get filter description using helper function
   const filterDescriptionText = useMemo(() => 
-    getFilterDescription(isMyNotifications, showFavoritesOnly, filter, location.pathname, selectedCategories, selectedPriorities),
-    [isMyNotifications, showFavoritesOnly, filter, location.pathname, selectedCategories, selectedPriorities]
+    getFilterDescription(isMyNotifications, showFavoritesOnly, filter, location.pathname, selectedCategories, selectedPriorities, searchTerm),
+    [isMyNotifications, showFavoritesOnly, filter, location.pathname, selectedCategories, selectedPriorities, searchTerm]
   );
 
-  if (notificationsLoading) {
+  if (isLoading) {
     return <div className="loading-message">Laen...</div>;
   }
 
@@ -216,6 +254,8 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
           filteredCount={filteredNotifications.length}
           filterDescription={filterDescriptionText}
           unreadCount={filteredUnreadCount}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
         />
       </div>
       
@@ -225,6 +265,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
           filter={filter} 
           isMyNotifications={isMyNotifications} 
           pathname={location.pathname} 
+          hasSearch={!!searchTerm.trim()}
         />
       ) : (
         <ul className="notifications">

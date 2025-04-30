@@ -1,4 +1,5 @@
 import React from 'react';
+import { MdSearch } from 'react-icons/md';
 import MultiSelectDropdown from './MultiSelectDropdown';
 import { NOTIFICATION_CATEGORIES, NOTIFICATION_PRIORITIES } from './constants';
 
@@ -15,10 +16,22 @@ const NotificationFilters = ({
   priorityDropdownRef,
   filteredCount,
   filterDescription,
-  unreadCount
+  unreadCount,
+  searchTerm,
+  setSearchTerm
 }) => {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+      <div className="search-container">
+        <MdSearch className="search-icon" />
+        <input
+          type="text"
+          placeholder="Otsi teateid..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
+      </div>
       <MultiSelectDropdown
         open={dropdownOpen}
         setOpen={setDropdownOpen}

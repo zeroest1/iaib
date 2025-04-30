@@ -98,7 +98,7 @@ export const getPageTitle = (isMyNotifications, showFavoritesOnly, filter, pathn
 /**
  * Get filter description text based on current filters
  */
-export const getFilterDescription = (isMyNotifications, showFavoritesOnly, filter, pathname, selectedCategories, selectedPriorities) => {
+export const getFilterDescription = (isMyNotifications, showFavoritesOnly, filter, pathname, selectedCategories, selectedPriorities, searchTerm) => {
   let description = [];
   
   // Base filter
@@ -130,13 +130,22 @@ export const getFilterDescription = (isMyNotifications, showFavoritesOnly, filte
     description.push(`Prioriteedid: ${priorityLabels.join(', ')}`);
   }
   
+  // Search term
+  if (searchTerm && searchTerm.trim()) {
+    description.push(`Otsing: "${searchTerm.trim()}"`);
+  }
+  
   return description.join(' | ');
 };
 
 /**
  * Get empty notification message based on filters
  */
-export const getEmptyNotificationMessage = (showFavoritesOnly, filter, isMyNotifications, pathname) => {
+export const getEmptyNotificationMessage = (showFavoritesOnly, filter, isMyNotifications, pathname, hasSearch) => {
+  if (hasSearch) {
+    return 'Otsingule vastavaid teateid ei leitud.';
+  }
+  
   if (isMyNotifications || pathname === '/my-notifications') {
     return 'Teil ei ole veel ühtegi teadet loodud.';
   }

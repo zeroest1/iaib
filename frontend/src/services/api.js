@@ -66,13 +66,25 @@ export const api = createApi({
       keepUnusedDataFor: 60,
     }),
     getNotifications: builder.query({
-      query: ({ my = false }) => ({ url: my ? '/notifications/my' : '/notifications', method: 'get' }),
+      query: (params = {}) => ({ 
+        url: params.my ? '/notifications/my' : '/notifications', 
+        method: 'get' 
+      }),
       providesTags: ['Notifications'],
       keepUnusedDataFor: 5,
     }),
     getNotification: builder.query({
       query: (id) => ({ url: `/notifications/${id}`, method: 'get' }),
       providesTags: (result, error, id) => [{ type: 'Notifications', id }],
+      keepUnusedDataFor: 5,
+    }),
+    searchNotifications: builder.query({
+      query: (searchTerm) => ({ 
+        url: `/notifications/search`, 
+        method: 'get',
+        params: { query: searchTerm }
+      }),
+      keepUnusedDataFor: 0, // Don't cache search results
     }),
     addNotification: builder.mutation({
       query: (notification) => ({ url: '/notifications', method: 'post', data: notification }),
@@ -155,6 +167,7 @@ export const {
   useGetRegistrationGroupsQuery,
   useGetNotificationsQuery,
   useGetNotificationQuery,
+  useSearchNotificationsQuery,
   useAddNotificationMutation,
   useUpdateNotificationMutation,
   useDeleteNotificationMutation,
