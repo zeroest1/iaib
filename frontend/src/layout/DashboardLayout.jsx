@@ -28,8 +28,14 @@ const DashboardLayout = ({ children }) => {
   });
   const [modalOpen, setModalOpen] = useState(false);
 
-  // RTK Query hooks
-  const { data: notifications = [], isLoading: notificationsLoading } = useGetNotificationsQuery({ my: false });
+  // RTK Query hooks - request all notifications by setting a high limit
+  const { data = {}, isLoading: notificationsLoading } = useGetNotificationsQuery({ 
+    my: false,
+    limit: 100 // Request more items to get a more accurate count
+  });
+  const notifications = data.notifications || [];
+  const totalCount = data.pagination?.total || 0;
+  
   const { 
     data: readStatusData = [], 
     isLoading: readStatusLoading,
@@ -89,15 +95,23 @@ const DashboardLayout = ({ children }) => {
     if (notificationsLoading) return 0;
     
     // For new users with no readStatusData, all notifications are unread
-    if (notifications.length > 0 && (!readStatusData || readStatusData.length === 0)) {
-      return notifications.length;
+    if (totalCount > 0 && (!readStatusData || readStatusData.length === 0)) {
+      return totalCount; // If no read status data, all notifications are unread
     }
     
-    // Count unread notifications
+    // If we have the total from pagination metadata but don't have all notifications loaded
+    if (totalCount > notifications.length && readStatusData && readStatusData.length > 0) {
+      // Calculate the number of notifications that have a read status
+      const readNotifications = readStatusData.filter(item => item.read).length;
+      // Unread count is total notifications minus read notifications
+      return totalCount - readNotifications;
+    }
+    
+    // Regular calculation using loaded notifications
     return notifications.filter(notification => 
       readStatus[notification.id] === undefined || readStatus[notification.id] === false
     ).length;
-  }, [notifications, readStatus, notificationsLoading, readStatusData]);
+  }, [notifications, readStatus, notificationsLoading, readStatusData, totalCount]);
 
   const handleLogoutRequest = () => {
     setModalOpen(true);
@@ -162,9 +176,6 @@ const DashboardLayout = ({ children }) => {
               >
                 <MdMarkEmailUnread />
                 Lugemata
-                {!notificationsLoading && unreadCount > 0 && 
-                  <span className="unread-badge" title="Lugemata teateid">{unreadCount}</span>
-                }
               </button>
             </li>
             <li>

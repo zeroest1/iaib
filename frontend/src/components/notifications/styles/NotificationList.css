@@ -455,4 +455,69 @@ h2 {
 .search-input:focus {
   border-color: #4285f4;
   box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
+}
+
+/* Pagination controls */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+  gap: 8px;
+}
+
+.pagination-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  min-width: 36px;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  margin: 0 10px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Add responsive adjustments */
+@media (max-width: 768px) {
+  .pagination-controls {
+    margin: 15px 0;
+  }
+  
+  .pagination-button {
+    padding: 5px 10px;
+    min-width: 30px;
+  }
+}
+
+/* Notification list info */
+.notification-list-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 5px;
+}
+
+.total-count {
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
 } 

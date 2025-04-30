@@ -40,6 +40,13 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const priorityDropdownRef = useRef(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [localPagination, setLocalPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1
+  });
   
   // Set local state based on path
   const [isMyNotifications, setIsMyNotifications] = useState(showMyNotifications || location.pathname === '/my-notifications');
@@ -47,6 +54,8 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   // Update local state when path changes
   useEffect(() => {
     setIsMyNotifications(showMyNotifications || location.pathname === '/my-notifications');
+    // Reset to page 1 when changing views
+    setCurrentPage(1);
   }, [location.pathname, showMyNotifications]);
 
   // Debounce search term to avoid too many API calls
@@ -63,19 +72,42 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   // Determine which query to use based on whether we have a search term
   const useSearchQuery = debouncedSearchTerm.trim().length > 0;
   
+  // Determine if we should use server-side pagination or client-side pagination
+  // Use client-side pagination for filtered views (favorites, unread)
+  const useClientPagination = showFavoritesOnly || 
+                             location.pathname === '/favorites' || 
+                             filter === 'unread' ||
+                             selectedCategories.length > 0 ||
+                             selectedPriorities.length > 0;
+  
   // RTK Query hooks
-  const { data: notifications = [], isLoading: notificationsLoading } = useGetNotificationsQuery(
-    { my: isMyNotifications },
+  const { data = {}, isLoading: notificationsLoading } = useGetNotificationsQuery(
+    // For client-side pagination, request all items by setting a high limit
+    { 
+      my: isMyNotifications,
+      page: useClientPagination ? 1 : currentPage,
+      limit: useClientPagination ? 100 : 10 // Request more items for client-side pagination
+    },
     { 
       pollingInterval: useSearchQuery ? 0 : POLLING_INTERVAL, // Disable polling during search
       skip: useSearchQuery
     }
   );
   
-  const { data: searchResults = [], isLoading: searchLoading } = useSearchNotificationsQuery(
-    debouncedSearchTerm, 
+  const notifications = data.notifications || [];
+  const pagination = data.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
+  
+  const { data: searchData = {}, isLoading: searchLoading } = useSearchNotificationsQuery(
+    debouncedSearchTerm ? { 
+      query: debouncedSearchTerm, 
+      page: useClientPagination ? 1 : currentPage,
+      limit: useClientPagination ? 100 : 10 // Request more items for client-side pagination
+    } : undefined,
     { skip: !useSearchQuery }
   );
+  
+  const searchResults = searchData.notifications || [];
+  const searchPagination = searchData.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
   
   const { data: favoritesData = [] } = useGetFavoritesQuery(undefined, 
     { pollingInterval: POLLING_INTERVAL }
@@ -161,8 +193,28 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     }
   };
 
+  // Current pagination - either from server or local
+  const currentPagination = useClientPagination 
+    ? localPagination 
+    : (useSearchQuery ? searchPagination : pagination);
+  
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= currentPagination.totalPages) {
+      if (useClientPagination) {
+        // For client-side pagination, just update local state
+        setLocalPagination(prev => ({ ...prev, page: newPage }));
+      } else {
+        // For server-side pagination, fetch new page
+        setCurrentPage(newPage);
+      }
+      // Scroll to top when changing pages
+      window.scrollTo(0, 0);
+    }
+  };
+  
   // Memoize filtered notifications
-  const filteredNotifications = useMemo(() => {
+  const allFilteredNotifications = useMemo(() => {
     if (isLoading) return [];
     
     let result = [...currentNotifications];
@@ -202,8 +254,6 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
       result = result.filter(n => selectedCategories.includes(n.category));
     }
     
-    // When using the search endpoint, we don't need to filter by search term client-side
-    
     return result;
   }, [
     currentNotifications, 
@@ -221,10 +271,88 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     useSearchQuery
   ]);
 
-  // Calculate filtered unread count
+  // Apply client-side pagination if needed
+  const filteredNotifications = useMemo(() => {
+    // Update local pagination totals
+    if (useClientPagination) {
+      const total = allFilteredNotifications.length;
+      const totalPages = Math.max(1, Math.ceil(total / 10));
+      
+      // Only update if values have changed to prevent re-renders
+      if (total !== localPagination.total || totalPages !== localPagination.totalPages) {
+        setLocalPagination(prev => ({
+          ...prev,
+          total,
+          totalPages,
+          // Adjust page if the current page is now beyond the max
+          page: Math.min(prev.page, totalPages)
+        }));
+      }
+      
+      // Apply client-side pagination
+      const startIndex = (localPagination.page - 1) * 10;
+      return allFilteredNotifications.slice(startIndex, startIndex + 10);
+    }
+    
+    // Otherwise use the filtered notifications as-is (server pagination)
+    return allFilteredNotifications;
+  }, [allFilteredNotifications, useClientPagination, localPagination.page, localPagination.total, localPagination.totalPages]);
+
+  // Calculate filtered unread count for all items (not just current page)
+  const totalUnreadCount = useMemo(() => {
+    // For regular view, use the same calculation as the sidebar
+    if (!useClientPagination && !useSearchQuery && filter !== 'unread' && 
+        !showFavoritesOnly && location.pathname !== '/favorites' && 
+        selectedCategories.length === 0 && selectedPriorities.length === 0) {
+      
+      // For new users with no readStatusData, all notifications are unread
+      const totalNotifications = currentPagination.total || 0;
+      if (totalNotifications > 0 && (!readStatusData || readStatusData.length === 0)) {
+        return totalNotifications; // If no read status data, all notifications are unread
+      }
+      
+      // If we have total from pagination metadata but don't have all notifications loaded
+      if (totalNotifications > notifications.length && readStatusData && readStatusData.length > 0) {
+        // Calculate the number of notifications that have a read status
+        const readNotifications = readStatusData.filter(item => item.read).length;
+        // Unread count is total notifications minus read notifications
+        return totalNotifications - readNotifications;
+      }
+    }
+    
+    // For filtered views, calculate based on all filtered items
+    return allFilteredNotifications.filter(n => readStatus[n.id] === false).length;
+  }, [
+    useClientPagination, 
+    useSearchQuery, 
+    filter, 
+    showFavoritesOnly, 
+    location.pathname, 
+    selectedCategories.length, 
+    selectedPriorities.length, 
+    currentPagination.total,
+    notifications.length,
+    readStatusData,
+    allFilteredNotifications, 
+    readStatus
+  ]);
+
+  // Calculate filtered unread count for current page (for display in the list)
   const filteredUnreadCount = useMemo(() => {
     return filteredNotifications.filter(n => readStatus[n.id] === false).length;
   }, [filteredNotifications, readStatus]);
+
+  // Debug pagination
+  useEffect(() => {
+    if (useClientPagination && allFilteredNotifications.length > 10) {
+      console.log('Client-side pagination enabled:', {
+        totalItems: allFilteredNotifications.length,
+        localPagination,
+        visibleItems: filteredNotifications.length,
+        shouldShowControls: localPagination.totalPages > 1
+      });
+    }
+  }, [useClientPagination, allFilteredNotifications.length, filteredNotifications.length, localPagination]);
 
   // Get filter description using helper function
   const filterDescriptionText = useMemo(() => 
@@ -251,9 +379,9 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
           setPriorityDropdownOpen={setPriorityDropdownOpen}
           dropdownRef={dropdownRef}
           priorityDropdownRef={priorityDropdownRef}
-          filteredCount={filteredNotifications.length}
+          filteredCount={useClientPagination ? localPagination.total : currentPagination.total}
           filterDescription={filterDescriptionText}
-          unreadCount={filteredUnreadCount}
+          unreadCount={totalUnreadCount}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
         />
@@ -268,21 +396,81 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
           hasSearch={!!searchTerm.trim()}
         />
       ) : (
-        <ul className="notifications">
-          {filteredNotifications.map((notification) => (
-            <NotificationItem
-              key={notification.id}
-              notification={notification}
-              userRole={user?.role}
-              userId={user?.id}
-              readStatus={readStatus}
-              onMarkAsRead={handleMarkAsRead}
-              onToggleFavorite={toggleFavorite}
-              onDelete={(isMyNotifications || location.pathname === '/my-notifications') ? handleDelete : null}
-              isFavorite={favoritesData.some(f => f.notification_id === notification.id)}
-            />
-          ))}
-        </ul>
+        <>
+          <div className="notification-list-info">
+            {useClientPagination ? (
+              <div className="total-count">
+                Kokku: {localPagination.total} teadet 
+                {localPagination.totalPages > 1 && ` (lehekülg ${localPagination.page}/${localPagination.totalPages})`}
+              </div>
+            ) : (
+              currentPagination.total > 0 && (
+                <div className="total-count">
+                  Kokku: {currentPagination.total} teadet 
+                  {currentPagination.totalPages > 1 && ` (lehekülg ${currentPagination.page}/${currentPagination.totalPages})`}
+                </div>
+              )
+            )}
+          </div>
+          <ul className="notifications">
+            {filteredNotifications.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+                userRole={user?.role}
+                userId={user?.id}
+                readStatus={readStatus}
+                onMarkAsRead={handleMarkAsRead}
+                onToggleFavorite={toggleFavorite}
+                onDelete={(isMyNotifications || location.pathname === '/my-notifications') ? handleDelete : null}
+                isFavorite={favoritesData.some(f => f.notification_id === notification.id)}
+              />
+            ))}
+          </ul>
+          
+          {/* Use more reliable condition here to always show pagination when needed */}
+          {(useClientPagination ? 
+            // For client-side, show if we have more than 10 total items 
+            allFilteredNotifications.length > 10 : 
+            // For server-side, use the server's total pages
+            currentPagination.totalPages > 1) && (
+            <div className="pagination-controls">
+              <button 
+                className="pagination-button"
+                onClick={() => handlePageChange(1)}
+                disabled={useClientPagination ? localPagination.page === 1 : currentPagination.page === 1}
+              >
+                &laquo;
+              </button>
+              <button 
+                className="pagination-button"
+                onClick={() => handlePageChange(useClientPagination ? localPagination.page - 1 : currentPagination.page - 1)}
+                disabled={useClientPagination ? localPagination.page === 1 : currentPagination.page === 1}
+              >
+                &lsaquo;
+              </button>
+              
+              <div className="pagination-info">
+                {useClientPagination ? localPagination.page : currentPagination.page} / {useClientPagination ? localPagination.totalPages : currentPagination.totalPages}
+              </div>
+              
+              <button 
+                className="pagination-button"
+                onClick={() => handlePageChange(useClientPagination ? localPagination.page + 1 : currentPagination.page + 1)}
+                disabled={useClientPagination ? localPagination.page === localPagination.totalPages : currentPagination.page === currentPagination.totalPages}
+              >
+                &rsaquo;
+              </button>
+              <button 
+                className="pagination-button"
+                onClick={() => handlePageChange(useClientPagination ? localPagination.totalPages : currentPagination.totalPages)}
+                disabled={useClientPagination ? localPagination.page === localPagination.totalPages : currentPagination.page === currentPagination.totalPages}
+              >
+                &raquo;
+              </button>
+            </div>
+          )}
+        </>
       )}
       <ConfirmationModal
         open={modalOpen}

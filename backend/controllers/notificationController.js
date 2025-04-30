@@ -4,6 +4,11 @@ const { formatNotificationDates } = require('../utils/dateFormatter');
 // Get all notifications with user information, filtered by user's groups
 const getAllNotifications = async (req, res) => {
   try {
+    // Pagination parameters with defaults
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+    
     // Check if user is programmijuht
     const isProgramManager = req.user.role === 'programmijuht';
     
@@ -15,6 +20,25 @@ const getAllNotifications = async (req, res) => {
     const userGroupIds = userGroupResult.rows.map(row => row.group_id);
     
     if (isProgramManager) {
+      // Get total count first
+      const countResult = await pool.query(`
+        SELECT COUNT(DISTINCT n.id) as total
+        FROM notifications n
+        WHERE n.created_by = $1
+           OR NOT EXISTS (
+              SELECT 1 FROM notification_groups 
+              WHERE notification_id = n.id
+           )
+           OR EXISTS (
+              SELECT 1 FROM notification_groups 
+              WHERE notification_id = n.id 
+              AND group_id = ANY($2::int[])
+           )
+      `, [req.user.id, userGroupIds.length > 0 ? userGroupIds : [null]]);
+      
+      const totalCount = parseInt(countResult.rows[0].total);
+      const totalPages = Math.ceil(totalCount / limit);
+      
       // Program managers can see:
       // 1. Their own created notifications
       // 2. Public notifications (no group targeting)
@@ -34,13 +58,35 @@ const getAllNotifications = async (req, res) => {
               AND group_id = ANY($2::int[])
            )
         ORDER BY n.created_at DESC
-      `, [req.user.id, userGroupIds.length > 0 ? userGroupIds : [null]]);
+        LIMIT $3 OFFSET $4
+      `, [req.user.id, userGroupIds.length > 0 ? userGroupIds : [null], limit, offset]);
       
       // Format dates before sending
       const formattedNotifications = formatNotificationDates(result.rows);
-      return res.json(formattedNotifications);
+      return res.json({
+        notifications: formattedNotifications,
+        pagination: {
+          total: totalCount,
+          page,
+          limit,
+          totalPages
+        }
+      });
     } else {
       if (userGroupIds.length === 0) {
+        // Get total count for public notifications
+        const countResult = await pool.query(`
+          SELECT COUNT(DISTINCT n.id) as total
+          FROM notifications n
+          WHERE NOT EXISTS (
+            SELECT 1 FROM notification_groups 
+            WHERE notification_id = n.id
+          )
+        `);
+        
+        const totalCount = parseInt(countResult.rows[0].total);
+        const totalPages = Math.ceil(totalCount / limit);
+        
         // If user has no groups, only show public notifications
         const result = await pool.query(`
           SELECT DISTINCT n.*, u.name as creator_name, u.email as creator_email
@@ -51,12 +97,41 @@ const getAllNotifications = async (req, res) => {
             WHERE notification_id = n.id
           )
           ORDER BY n.created_at DESC
-        `);
+          LIMIT $1 OFFSET $2
+        `, [limit, offset]);
         
         // Format dates before sending
         const formattedNotifications = formatNotificationDates(result.rows);
-        return res.json(formattedNotifications);
+        return res.json({
+          notifications: formattedNotifications,
+          pagination: {
+            total: totalCount,
+            page,
+            limit,
+            totalPages
+          }
+        });
       }
+      
+      // Get total count for user's groups and public notifications
+      const countResult = await pool.query(`
+        SELECT COUNT(DISTINCT n.id) as total
+        FROM notifications n
+        WHERE (
+          EXISTS (
+            SELECT 1 FROM notification_groups 
+            WHERE notification_id = n.id 
+            AND group_id = ANY($1::int[])
+          )
+          OR NOT EXISTS (
+            SELECT 1 FROM notification_groups 
+            WHERE notification_id = n.id
+          )
+        )
+      `, [userGroupIds]);
+      
+      const totalCount = parseInt(countResult.rows[0].total);
+      const totalPages = Math.ceil(totalCount / limit);
       
       // Tudeng sees notifications targeted to any of their groups + notifications without any group targeting
       const result = await pool.query(`
@@ -77,11 +152,20 @@ const getAllNotifications = async (req, res) => {
           )
         )
         ORDER BY n.created_at DESC
-      `, [userGroupIds]);
+        LIMIT $2 OFFSET $3
+      `, [userGroupIds, limit, offset]);
       
       // Format dates before sending
       const formattedNotifications = formatNotificationDates(result.rows);
-      return res.json(formattedNotifications);
+      return res.json({
+        notifications: formattedNotifications,
+        pagination: {
+          total: totalCount,
+          page,
+          limit,
+          totalPages
+        }
+      });
     }
   } catch (err) {
     console.error('Error fetching notifications:', err);

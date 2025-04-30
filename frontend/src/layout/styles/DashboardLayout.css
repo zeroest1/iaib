@@ -171,4 +171,21 @@
 .dashboard-children {
   flex: 1;
   padding: 2rem 2.5rem;
-} 
+}
+
+/* Add styling for total count badge */
+.sidebar li button .count-badge {
+  margin-left: 0.5rem;
+  background-color: #4285f4;
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 50%;
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.25rem;
+}
+
+/* Keep existing styles for unread badge */ 

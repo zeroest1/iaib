@@ -68,7 +68,11 @@ export const api = createApi({
     getNotifications: builder.query({
       query: (params = {}) => ({ 
         url: params.my ? '/notifications/my' : '/notifications', 
-        method: 'get' 
+        method: 'get',
+        params: { 
+          page: params.page, 
+          limit: params.limit 
+        }
       }),
       providesTags: ['Notifications'],
       keepUnusedDataFor: 5,
@@ -79,11 +83,25 @@ export const api = createApi({
       keepUnusedDataFor: 5,
     }),
     searchNotifications: builder.query({
-      query: (searchTerm) => ({ 
-        url: `/notifications/search`, 
-        method: 'get',
-        params: { query: searchTerm }
-      }),
+      query: (params) => {
+        if (typeof params === 'string') {
+          // For backward compatibility
+          return { 
+            url: `/notifications/search`, 
+            method: 'get',
+            params: { query: params }
+          };
+        }
+        return { 
+          url: `/notifications/search`, 
+          method: 'get',
+          params: { 
+            query: params.query,
+            page: params.page,
+            limit: params.limit
+          }
+        };
+      },
       keepUnusedDataFor: 0, // Don't cache search results
     }),
     addNotification: builder.mutation({
