@@ -181,6 +181,7 @@ h2 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .delete-button:hover {

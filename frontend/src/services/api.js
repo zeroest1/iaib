@@ -76,6 +76,21 @@ export const api = createApi({
     }),
     addNotification: builder.mutation({
       query: (notification) => ({ url: '/notifications', method: 'post', data: notification }),
+      async onQueryStarted(notification, { dispatch, queryFulfilled }) {
+        try {
+          // Wait for the notification creation to complete
+          const { data: createdNotification } = await queryFulfilled;
+          
+          // Automatically mark as read for the program manager who created it
+          if (createdNotification?.id) {
+            dispatch(
+              api.endpoints.markAsRead.initiate(createdNotification.id)
+            );
+          }
+        } catch (error) {
+          console.error('Error auto-marking notification as read:', error);
+        }
+      },
       invalidatesTags: ['Notifications'],
     }),
     updateNotification: builder.mutation({

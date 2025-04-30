@@ -5,7 +5,14 @@ import { logout } from '../features/authSlice';
 import { useGetNotificationsQuery, useGetReadStatusQuery, useGetUserGroupsQuery } from '../services/api';
 import ConfirmationModal from '../components/notifications/ConfirmationModal';
 import './styles/DashboardLayout.css';
-import { MdOutlinePostAdd } from 'react-icons/md';
+import { 
+  MdOutlinePostAdd, 
+  MdNotifications, 
+  MdMarkEmailUnread, 
+  MdFavorite, 
+  MdPersonalVideo, 
+  MdLogout 
+} from 'react-icons/md';
 
 const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
@@ -144,7 +151,8 @@ const DashboardLayout = ({ children }) => {
                 className={activeFilter === 'all' ? 'sidebar-active' : ''}
                 onClick={() => handleSidebarClick('all')}
               >
-                Teated {notificationsLoading ? '...' : `(${notifications.length})`}
+                <MdNotifications />
+                Teated
               </button>
             </li>
             <li>
@@ -152,12 +160,11 @@ const DashboardLayout = ({ children }) => {
                 className={activeFilter === 'unread' ? 'sidebar-active' : ''} 
                 onClick={() => handleSidebarClick('unread')}
               >
-                Lugemata {notificationsLoading ? '...' : (
-                  <>
-                    ({unreadCount})
-                    {unreadCount > 0 && <span className="unread-badge" title="Lugemata teateid">{unreadCount}</span>}
-                  </>
-                )}
+                <MdMarkEmailUnread />
+                Lugemata
+                {!notificationsLoading && unreadCount > 0 && 
+                  <span className="unread-badge" title="Lugemata teateid">{unreadCount}</span>
+                }
               </button>
             </li>
             <li>
@@ -165,6 +172,7 @@ const DashboardLayout = ({ children }) => {
                 className={activeFilter === 'favorites' ? 'sidebar-active' : ''} 
                 onClick={() => handleSidebarClick('favorites')}
               >
+                <MdFavorite />
                 Lemmikud
               </button>
             </li>
@@ -177,6 +185,7 @@ const DashboardLayout = ({ children }) => {
                     to="/my-notifications" 
                     className={activeFilter === 'my' ? 'sidebar-active' : ''}
                   >
+                    <MdPersonalVideo />
                     Minu teated
                   </Link>
                 </li>
@@ -191,6 +200,7 @@ const DashboardLayout = ({ children }) => {
 
             <li>
               <button onClick={handleLogoutRequest} className="sidebar-logout">
+                <MdLogout />
                 Logi välja
               </button>
             </li>
