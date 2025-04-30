@@ -15,6 +15,7 @@
 
 .form-group {
   margin-bottom: 25px;
+  width: 100%;
 }
 
 .form-group label {
@@ -25,31 +26,44 @@
   font-size: 16px;
 }
 
+/* Common styles for all form elements */
 .form-input,
 .form-textarea,
-.form-select {
+.form-select,
+.group-search-input,
+.checkbox-group {
   width: 100%;
-  padding: 12px;
-  border: 2px solid #e4067e;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: all 0.3s ease;
+  box-sizing: border-box;
   font-family: 'Montserrat', sans-serif;
+  transition: all 0.3s ease;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.form-input,
+.form-select,
+.group-search-input {
+  padding: 12px;
+  font-size: 16px;
   background-color: #ffffff;
   cursor: pointer;
 }
 
-.form-input:focus,
-.form-textarea:focus,
-.form-select:focus {
-  outline: none;
-  border-color: #c0056a;
-  box-shadow: 0 0 0 2px rgba(228, 6, 126, 0.1);
-}
-
 .form-textarea {
+  padding: 12px;
+  font-size: 16px;
   min-height: 150px;
   resize: vertical;
+  background-color: #ffffff;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus,
+.group-search-input:focus {
+  outline: none;
+  border-color: #e4067e;
+  box-shadow: 0 0 0 2px rgba(228, 6, 126, 0.1);
 }
 
 .form-select {
@@ -94,10 +108,8 @@
   gap: 10px;
   margin-top: 10px;
   padding: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
   background-color: #f9f9f9;
-  max-height: 200px;
+  max-height: 300px;
   overflow-y: auto;
 }
 
@@ -153,4 +165,24 @@
   background-color: rgba(228, 6, 126, 0.05);
   border-radius: 4px;
   padding: 4px 8px;
+}
+
+/* Group search styling */
+.group-search-container {
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.group-search-input {
+  padding: 12px;
+  font-size: 16px;
+}
+
+.no-groups-found {
+  text-align: center;
+  padding: 10px;
+  color: #666;
+  font-style: italic;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.05);
 } 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NOTIFICATION_CATEGORIES, NOTIFICATION_PRIORITIES } from './constants';
 import './styles/NotificationForm.css';
 
@@ -13,9 +13,20 @@ const NotificationFormFields = ({
   selectedGroups,
   handleGroupChange
 }) => {
+  const [groupSearchTerm, setGroupSearchTerm] = useState('');
+  
   // Separate role groups from regular groups
   const roleGroups = availableGroups ? availableGroups.filter(g => g.is_role_group) : [];
   const regularGroups = availableGroups ? availableGroups.filter(g => !g.is_role_group) : [];
+  
+  // Filter groups based on search term
+  const filteredRoleGroups = groupSearchTerm 
+    ? roleGroups.filter(g => g.name.toLowerCase().includes(groupSearchTerm.toLowerCase()))
+    : roleGroups;
+    
+  const filteredRegularGroups = groupSearchTerm 
+    ? regularGroups.filter(g => g.name.toLowerCase().includes(groupSearchTerm.toLowerCase()))
+    : regularGroups;
 
   return (
     <>
@@ -81,6 +92,17 @@ const NotificationFormFields = ({
       </div>
       <div className="form-group">
         <label htmlFor="targetGroups">Sihtgrupid</label>
+        
+        <div className="group-search-container">
+          <input
+            type="text"
+            placeholder="Otsi gruppe..."
+            value={groupSearchTerm}
+            onChange={(e) => setGroupSearchTerm(e.target.value)}
+            className="group-search-input"
+          />
+        </div>
+        
         <div className="checkbox-group">
           <div className="checkbox-item">
             <input
@@ -94,10 +116,10 @@ const NotificationFormFields = ({
           </div>
           
           {/* Role groups section */}
-          {roleGroups.length > 0 && (
+          {filteredRoleGroups.length > 0 && (
             <div className="group-section">
-              <h4>Rollipõhised grupid</h4>
-              {roleGroups.map(group => (
+              <h4>Rollipõhised grupid {groupSearchTerm && filteredRoleGroups.length !== roleGroups.length && `(${filteredRoleGroups.length}/${roleGroups.length})`}</h4>
+              {filteredRoleGroups.map(group => (
                 <div key={group.id} className="checkbox-item role-group-item">
                   <input
                     type="checkbox"
@@ -121,10 +143,10 @@ const NotificationFormFields = ({
           )}
           
           {/* Regular groups section */}
-          {regularGroups.length > 0 && (
+          {filteredRegularGroups.length > 0 && (
             <div className="group-section">
-              <h4>Regulaarsed grupid</h4>
-              {regularGroups.map(group => (
+              <h4>Regulaarsed grupid {groupSearchTerm && filteredRegularGroups.length !== regularGroups.length && `(${filteredRegularGroups.length}/${regularGroups.length})`}</h4>
+              {filteredRegularGroups.map(group => (
                 <div key={group.id} className="checkbox-item">
                   <input
                     type="checkbox"
@@ -144,6 +166,12 @@ const NotificationFormFields = ({
                   <label htmlFor={`group-${group.id}`}>{group.name}</label>
                 </div>
               ))}
+            </div>
+          )}
+          
+          {groupSearchTerm && filteredRoleGroups.length === 0 && filteredRegularGroups.length === 0 && (
+            <div className="no-groups-found">
+              Ei leidnud ühtegi gruppi otsingule: "{groupSearchTerm}"
             </div>
           )}
         </div>
