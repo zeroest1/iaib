@@ -2,6 +2,9 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+// Set timezone for the database connection
+process.env.PGTZ = 'Europe/Tallinn';
+
 const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
@@ -18,6 +21,12 @@ pool.connect((err, client, release) => {
   }
   console.log('Successfully connected to the database');
   release();
+});
+
+// Set timezone for all connections
+pool.on('connect', (client) => {
+  client.query('SET timezone = "Europe/Tallinn"');
+  console.log('PostgreSQL timezone set to Europe/Tallinn');
 });
 
 // Create tables if they don't exist

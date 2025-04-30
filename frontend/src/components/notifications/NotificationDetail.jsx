@@ -9,6 +9,7 @@ import {
   useGetNotificationGroupsQuery,
   useGetNotificationReadStatusQuery
 } from '../../services/api';
+import { formatDate } from './utils';
 
 const NotificationDetail = () => {
   const { id } = useParams();
@@ -73,6 +74,9 @@ const NotificationDetail = () => {
     return <p className="loading-message">Laen...</p>;
   }
 
+  // Debug log for date format
+  console.log('Raw date format:', notification.created_at, typeof notification.created_at);
+
   // Check if the current user is programmijuht and created this notification
   const canEdit = user?.role === 'programmijuht' && user.id === notification.created_by;
   const isCreator = user?.id === notification.created_by;
@@ -88,7 +92,7 @@ const NotificationDetail = () => {
           {user?.role === 'programmijuht' && (
             <p>Sihtgrupid: {formatGroupInfo()}</p>
           )}
-          <p><i>Loodud: {new Date(notification.created_at).toLocaleString()}</i></p>
+          <p><i>Loodud: {formatDate(notification.created_at)}</i></p>
           
           {/* Display read status information for the notification creator */}
           {isCreator && (
@@ -104,9 +108,6 @@ const NotificationDetail = () => {
                     <li key={reader.user_id} className="reader-item">
                       <span className="reader-name">{reader.name}</span>
                       <span className="reader-role">({reader.role === 'programmijuht' ? 'Programmijuht' : 'Tudeng'})</span>
-                      <span className="read-time">
-                        {new Date(reader.updated_at || reader.created_at).toLocaleString()}
-                      </span>
                     </li>
                   ))}
                 </ul>

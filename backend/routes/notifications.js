@@ -5,6 +5,25 @@ const pool = require('../db');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key';
 
+// Helper function to format notification timestamps to ISO format in the correct timezone
+const formatNotificationDates = (data) => {
+  // Handle array of notifications
+  if (Array.isArray(data)) {
+    return data.map(notification => {
+      if (notification.created_at) {
+        notification.created_at = new Date(notification.created_at).toISOString();
+      }
+      return notification;
+    });
+  }
+  
+  // Handle single notification
+  if (data && data.created_at) {
+    data.created_at = new Date(data.created_at).toISOString();
+  }
+  return data;
+};
+
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -37,22 +56,38 @@ router.get('/', authenticateToken, async (req, res) => {
     // Check if user is programmijuht
     const isProgramManager = req.user.role === 'programmijuht';
     
+    // First get the user's groups - needed for both roles
+    const userGroupResult = await pool.query(`
+      SELECT group_id FROM user_groups WHERE user_id = $1
+    `, [req.user.id]);
+    
+    const userGroupIds = userGroupResult.rows.map(row => row.group_id);
+    
     if (isProgramManager) {
-      // Programmijuht sees all notifications they created + all notifications where no group is specified
+      // Program managers can see:
+      // 1. Their own created notifications
+      // 2. Public notifications (no group targeting)
+      // 3. Notifications targeted to their groups
       const result = await pool.query(`
         SELECT DISTINCT n.*, u.name as creator_name, u.email as creator_email
         FROM notifications n
         LEFT JOIN users u ON n.created_by = u.id
-        LEFT JOIN notification_groups ng ON n.id = ng.notification_id
-        WHERE n.created_by = $1 
+        WHERE n.created_by = $1
            OR NOT EXISTS (
               SELECT 1 FROM notification_groups 
               WHERE notification_id = n.id
            )
+           OR EXISTS (
+              SELECT 1 FROM notification_groups 
+              WHERE notification_id = n.id 
+              AND group_id = ANY($2::int[])
+           )
         ORDER BY n.created_at DESC
-      `, [req.user.id]);
+      `, [req.user.id, userGroupIds.length > 0 ? userGroupIds : [null]]);
       
-      return res.json(result.rows);
+      // Format dates before sending
+      const formattedNotifications = formatNotificationDates(result.rows);
+      return res.json(formattedNotifications);
     } else {
       // Get user's groups
       const userGroupResult = await pool.query(`
@@ -74,7 +109,9 @@ router.get('/', authenticateToken, async (req, res) => {
           ORDER BY n.created_at DESC
         `);
         
-        return res.json(result.rows);
+        // Format dates before sending
+        const formattedNotifications = formatNotificationDates(result.rows);
+        return res.json(formattedNotifications);
       }
       
       // Tudeng sees notifications targeted to any of their groups + notifications without any group targeting
@@ -98,7 +135,9 @@ router.get('/', authenticateToken, async (req, res) => {
         ORDER BY n.created_at DESC
       `, [userGroupIds]);
       
-      return res.json(result.rows);
+      // Format dates before sending
+      const formattedNotifications = formatNotificationDates(result.rows);
+      return res.json(formattedNotifications);
     }
   } catch (err) {
     console.error('Error fetching notifications:', err);
@@ -176,7 +215,9 @@ router.get('/my', authenticateToken, async (req, res) => {
       user_id: req.user.id
     });
     
-    res.json(result.rows);
+    // Format dates before sending
+    const formattedNotifications = formatNotificationDates(result.rows);
+    res.json(formattedNotifications);
   } catch (err) {
     console.error('Error fetching user notifications:', err);
     res.status(500).json({ error: 'Internal server error', details: err.message });
@@ -205,7 +246,10 @@ router.get('/unread', authenticateToken, async (req, res) => {
       WHERE r.read IS NULL OR r.read = false
       ORDER BY n.created_at DESC
     `, [req.user.id]);
-    res.json(result.rows);
+    
+    // Format dates before sending
+    const formattedNotifications = formatNotificationDates(result.rows);
+    res.json(formattedNotifications);
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -232,7 +276,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     
     if (isProgramManager && isCreator) {
       // Programmijuht who created it can always see it
-      return res.json(result.rows[0]);
+      return res.json(formatNotificationDates(result.rows[0]));
     }
     
     // Check if notification has group targeting
@@ -242,12 +286,12 @@ router.get('/:id', authenticateToken, async (req, res) => {
     
     if (groupCheck.rows.length === 0) {
       // No group targeting, everyone can see it
-      return res.json(result.rows[0]);
+      return res.json(formatNotificationDates(result.rows[0]));
     }
     
     if (isProgramManager) {
-      // Programmijuht sees all notifications
-      return res.json(result.rows[0]);
+      // Programmijuht sees all notifications, including those from other program managers
+      return res.json(formatNotificationDates(result.rows[0]));
     }
     
     // Get user's groups
@@ -272,7 +316,9 @@ router.get('/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'You do not have access to this notification' });
     }
     
-    res.json(result.rows[0]);
+    // Format the notification date before sending
+    const formattedNotification = formatNotificationDates(result.rows[0]);
+    res.json(formattedNotification);
   } catch (err) {
     console.error('Error fetching notification:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -333,7 +379,9 @@ router.post('/', authenticateToken, checkProgramManager, async (req, res) => {
     // Commit transaction
     await pool.query('COMMIT');
     
-    res.status(201).json(notification);
+    // Format date before sending
+    const formattedNotification = formatNotificationDates(notification);
+    res.status(201).json(formattedNotification);
   } catch (err) {
     await pool.query('ROLLBACK');
     console.error('Error creating notification:', err);
@@ -401,7 +449,9 @@ router.put('/:id', authenticateToken, checkProgramManager, async (req, res) => {
     // Commit transaction
     await pool.query('COMMIT');
     
-    res.json(result.rows[0]);
+    // Format date before sending
+    const formattedNotification = formatNotificationDates(result.rows[0]);
+    res.json(formattedNotification);
   } catch (err) {
     await pool.query('ROLLBACK');
     console.error('Error updating notification:', err);
