@@ -2,9 +2,13 @@
 import React from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { MdArrowBack, MdEdit } from 'react-icons/md';
+import { MdArrowBack, MdEdit, MdOutlineVisibility } from 'react-icons/md';
 import './styles/NotificationDetail.css';
-import { useGetNotificationQuery, useGetNotificationGroupsQuery } from '../../services/api';
+import { 
+  useGetNotificationQuery, 
+  useGetNotificationGroupsQuery,
+  useGetNotificationReadStatusQuery
+} from '../../services/api';
 
 const NotificationDetail = () => {
   const { id } = useParams();
@@ -14,6 +18,12 @@ const NotificationDetail = () => {
   
   const { data: notification, isLoading, error } = useGetNotificationQuery(id);
   const { data: notificationGroups = [] } = useGetNotificationGroupsQuery(id);
+  
+  // Only fetch read status if the user is the creator
+  const { data: readStatusData = [], isLoading: readStatusLoading } = 
+    useGetNotificationReadStatusQuery(id, {
+      skip: !notification || notification?.created_by !== user?.id
+    });
 
   const handleBack = () => {
     // Check if we have a stored previous location
@@ -65,6 +75,7 @@ const NotificationDetail = () => {
 
   // Check if the current user is programmijuht and created this notification
   const canEdit = user?.role === 'programmijuht' && user.id === notification.created_by;
+  const isCreator = user?.id === notification.created_by;
 
   return (
     <div className="notification-detail">
@@ -78,6 +89,30 @@ const NotificationDetail = () => {
             <p>Sihtgrupid: {formatGroupInfo()}</p>
           )}
           <p><i>Loodud: {new Date(notification.created_at).toLocaleString()}</i></p>
+          
+          {/* Display read status information for the notification creator */}
+          {isCreator && (
+            <div className="read-status-section">
+              <h3><MdOutlineVisibility /> Kes on lugenud:</h3>
+              {readStatusLoading ? (
+                <p>Laen lugejate infot...</p>
+              ) : readStatusData.length === 0 ? (
+                <p>Keegi pole veel seda teadet lugenud.</p>
+              ) : (
+                <ul className="readers-list">
+                  {readStatusData.map(reader => (
+                    <li key={reader.user_id} className="reader-item">
+                      <span className="reader-name">{reader.name}</span>
+                      <span className="reader-role">({reader.role === 'programmijuht' ? 'Programmijuht' : 'Tudeng'})</span>
+                      <span className="read-time">
+                        {new Date(reader.updated_at || reader.created_at).toLocaleString()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
       </div>
       <div className="button-group">

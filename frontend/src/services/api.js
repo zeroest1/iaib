@@ -140,6 +140,11 @@ export const api = createApi({
       query: (notificationId) => ({ url: `/notifications/${notificationId}/groups`, method: 'get' }),
       providesTags: (result, error, id) => [{ type: 'Groups', id }],
     }),
+    // Fetch read status for a specific notification with user information
+    getNotificationReadStatus: builder.query({
+      query: (notificationId) => ({ url: `/notifications/${notificationId}/read-status`, method: 'get' }),
+      providesTags: (result, error, id) => [{ type: 'ReadStatus', id }],
+    }),
   }),
 });
 
@@ -161,4 +166,5 @@ export const {
   useGetGroupsQuery,
   useGetUserGroupsQuery,
   useGetNotificationGroupsQuery,
+  useGetNotificationReadStatusQuery,
 } = api; 

@@ -441,6 +441,43 @@ router.post('/:id/read', authenticateToken, async (req, res) => {
   }
 });
 
+// Get read status for a specific notification with user information
+router.get('/:id/read-status', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // First check if the user is authorized to view this information
+    // Only the creator of the notification should see who read it
+    const notificationCheck = await pool.query(
+      'SELECT created_by FROM notifications WHERE id = $1',
+      [id]
+    );
+    
+    if (notificationCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+    
+    // Check if the user is the creator of the notification
+    if (notificationCheck.rows[0].created_by !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied. Only the creator can view read status.' });
+    }
+    
+    // Get read status with user information
+    const result = await pool.query(`
+      SELECT nrs.*, u.name, u.email, u.role 
+      FROM notification_read_status nrs
+      JOIN users u ON nrs.user_id = u.id
+      WHERE nrs.notification_id = $1 AND nrs.read = true
+      ORDER BY u.name
+    `, [id]);
+    
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error getting notification read status:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Delete notification - only for programmijuht and only their own notifications
 router.delete('/:id', authenticateToken, checkProgramManager, async (req, res) => {
   try {
