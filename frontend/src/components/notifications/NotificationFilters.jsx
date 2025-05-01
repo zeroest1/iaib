@@ -1,7 +1,8 @@
 import React from 'react';
-import { MdSearch } from 'react-icons/md';
+import { MdSearch, MdClear } from 'react-icons/md';
 import MultiSelectDropdown from './MultiSelectDropdown';
 import { NOTIFICATION_CATEGORIES, NOTIFICATION_PRIORITIES } from './constants';
+import './styles/NotificationFilters.css';
 
 const NotificationFilters = ({ 
   selectedCategories, 
@@ -20,36 +21,60 @@ const NotificationFilters = ({
   searchTerm,
   setSearchTerm
 }) => {
+  // Check if any filters are applied
+  const hasActiveFilters = searchTerm.trim() !== '' || 
+                           selectedCategories.length > 0 || 
+                           selectedPriorities.length > 0;
+  
+  // Function to reset all filters
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setSelectedCategories([]);
+    setSelectedPriorities([]);
+  };
+  
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-      <div className="search-container">
-        <MdSearch className="search-icon" />
-        <input
-          type="text"
-          placeholder="Otsi teateid..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="search-input"
+    <div className="filters-container">
+      <div className="filters-row">
+        {hasActiveFilters && (
+          <button 
+            className="reset-filters-btn"
+            onClick={handleResetFilters}
+            title="Eemalda kõik filtrid"
+          >
+            <MdClear /> Lähtesta
+          </button>
+        )}
+        <div className="search-container">
+          <MdSearch className="search-icon" />
+          <input
+            type="text"
+            placeholder="Otsi teateid..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+        </div>
+        <MultiSelectDropdown
+          open={dropdownOpen}
+          setOpen={setDropdownOpen}
+          options={NOTIFICATION_CATEGORIES}
+          selected={selectedCategories}
+          setSelected={setSelectedCategories}
+          buttonLabel="Kategooria"
+          dropdownRef={dropdownRef}
+        />
+        <MultiSelectDropdown
+          open={priorityDropdownOpen}
+          setOpen={setPriorityDropdownOpen}
+          options={NOTIFICATION_PRIORITIES}
+          selected={selectedPriorities}
+          setSelected={setSelectedPriorities}
+          buttonLabel="Prioriteet"
+          dropdownRef={priorityDropdownRef}
         />
       </div>
-      <MultiSelectDropdown
-        open={dropdownOpen}
-        setOpen={setDropdownOpen}
-        options={NOTIFICATION_CATEGORIES}
-        selected={selectedCategories}
-        setSelected={setSelectedCategories}
-        buttonLabel="Kategooria"
-        dropdownRef={dropdownRef}
-      />
-      <MultiSelectDropdown
-        open={priorityDropdownOpen}
-        setOpen={setPriorityDropdownOpen}
-        options={NOTIFICATION_PRIORITIES}
-        selected={selectedPriorities}
-        setSelected={setSelectedPriorities}
-        buttonLabel="Prioriteet"
-        dropdownRef={priorityDropdownRef}
-      />
+
       <div className="notification-count">
         {filterDescription && (
           <span className="filter-description">{filterDescription}</span>
