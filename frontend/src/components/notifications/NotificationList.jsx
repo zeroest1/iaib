@@ -6,7 +6,7 @@ import './styles/NotificationList.css';
 import NotificationItem from './NotificationItem';
 import NotificationFilters from './NotificationFilters';
 import EmptyNotifications from './EmptyNotifications';
-import ConfirmationModal from './ConfirmationModal';
+import ConfirmationModal from '../common/ConfirmationModal';
 import { POLLING_INTERVAL } from './constants';
 import {
   calculateReadStatus,
@@ -474,7 +474,10 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
       )}
       <ConfirmationModal
         open={modalOpen}
+        title="Kustutamine"
         message={modalMessage}
+        confirmText="Kustuta"
+        cancelText="Tühista"
         onConfirm={modalAction}
         onCancel={() => setModalOpen(false)}
       />

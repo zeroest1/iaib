@@ -33,8 +33,7 @@
   margin-bottom: 1.5rem;
 }
 
-.sidebar nav ul li a,
-.sidebar nav ul li button {
+.sidebar nav ul li a {
   color: #fff;
   text-decoration: none;
   font-size: 1.1rem;
@@ -50,27 +49,24 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  font-family: 'Montserrat', sans-serif !important;
 }
 
 /* Style for the icons in sidebar */
-.sidebar nav ul li a svg,
-.sidebar nav ul li button svg {
+.sidebar nav ul li a svg {
   font-size: 1.4rem;
   min-width: 1.4rem;
   color: #e4067e;
 }
 
 .sidebar nav ul li a:hover,
-.sidebar nav ul li button:hover,
-.sidebar nav ul li a:focus,
-.sidebar nav ul li button:focus {
+.sidebar nav ul li a:focus {
   color: #e4067e;
   background: rgba(228, 6, 126, 0.1);
   outline: none;
 }
 
 .sidebar nav ul li a:hover svg,
-.sidebar nav ul li button:hover svg,
 .sidebar-active svg {
   color: #e4067e;
 }

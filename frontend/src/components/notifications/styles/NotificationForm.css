@@ -196,4 +196,29 @@
   font-style: italic;
   border-radius: 4px;
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Template Variables Form */
+.template-variables-form {
+  text-align: left;
+}
+
+.template-variables-form .variable-label {
+  text-align: left;
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.template-variables-form .form-group {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.template-variables-form input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: 'Montserrat', sans-serif;
 } 

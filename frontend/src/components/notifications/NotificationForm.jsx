@@ -12,6 +12,27 @@ import {
   useGetTemplatesQuery
 } from '../../services/api';
 import NotificationFormFields from './NotificationFormFields';
+import ConfirmationModal from '../common/ConfirmationModal';
+
+// Template variables modal content
+const TemplateVariablesForm = ({ variables, values, onChange }) => (
+  <div className="template-variables-form">
+    {Object.entries(variables).map(([variable, _]) => (
+      <div className="form-group" key={variable}>
+        <label htmlFor={variable} className="variable-label">{variable}</label>
+        <input
+          type="text"
+          id={variable}
+          name={variable}
+          value={values[variable]}
+          onChange={onChange}
+          className="form-control"
+          placeholder={`Sisesta väärtus muutujale {${variable}}`}
+        />
+      </div>
+    ))}
+  </div>
+);
 
 const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
   const [formData, setFormData] = useState({
@@ -483,7 +504,7 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="form-control"
+              className="form-input"
               placeholder="Sisesta malli nimi"
               required
             />
@@ -531,52 +552,28 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
         />
       </form>
 
-      {/* Template Variables Modal */}
-      {showVariableModal && (
-        <div className="confirmation-modal">
-          <div className="modal-content">
-            <h3>Täida malli muutujad</h3>
-            <p>Palun määra väärtused järgmistele muutujatele:</p>
-            
-            {Object.entries(templateVariables).map(([variable, _]) => (
-              <div className="form-group" key={variable}>
-                <label htmlFor={variable}>{variable}</label>
-                <input
-                  type="text"
-                  id={variable}
-                  name={variable}
-                  value={variableValues[variable]}
-                  onChange={handleVariableChange}
-                  className="form-control"
-                  placeholder={`Sisesta väärtus muutujale {${variable}}`}
-                />
-              </div>
-            ))}
-            
-            <div className="modal-actions">
-              <button 
-                className="cancel-button" 
-                onClick={() => {
-                  setShowVariableModal(false);
-                  // If this is from URL, navigate back to templates
-                  if (templateIdFromUrl) {
-                    navigate('/templates');
-                  }
-                }}
-              >
-                Tühista
-              </button>
-              <button 
-                className="confirm-button" 
-                onClick={handleVariableSubmit}
-                type="button"
-              >
-                Kinnita
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Template Variables Modal using the shared component */}
+      <ConfirmationModal
+        open={showVariableModal}
+        title="Täida malli muutujad"
+        message="Palun määra väärtused järgmistele muutujatele:"
+        confirmText="Kinnita"
+        cancelText="Tühista"
+        onConfirm={handleVariableSubmit}
+        onCancel={() => {
+          setShowVariableModal(false);
+          // If this is from URL, navigate back to templates
+          if (templateIdFromUrl) {
+            navigate('/templates');
+          }
+        }}
+      >
+        <TemplateVariablesForm 
+          variables={templateVariables}
+          values={variableValues}
+          onChange={handleVariableChange}
+        />
+      </ConfirmationModal>
     </div>
   );
 };

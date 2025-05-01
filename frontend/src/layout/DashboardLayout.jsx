@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../features/authSlice';
 import { useGetNotificationsQuery, useGetReadStatusQuery, useGetUserGroupsQuery } from '../services/api';
-import ConfirmationModal from '../components/notifications/ConfirmationModal';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 import './styles/DashboardLayout.css';
 import { 
   MdOutlinePostAdd, 
@@ -66,6 +66,8 @@ const DashboardLayout = ({ children }) => {
   useEffect(() => {
     if (location.pathname === '/favorites') setActiveFilter('favorites');
     else if (location.pathname === '/my-notifications') setActiveFilter('my');
+    else if (location.pathname === '/add-notification') setActiveFilter('add');
+    else if (location.pathname === '/templates') setActiveFilter('templates');
     else if (location.search.includes('filter=unread')) setActiveFilter('unread');
     else if (location.pathname === '/') setActiveFilter('all');
   }, [location]);
@@ -128,13 +130,6 @@ const DashboardLayout = ({ children }) => {
     setModalOpen(false);
   };
 
-  const handleSidebarClick = (filter) => {
-    setActiveFilter(filter);
-    if (filter === 'favorites') navigate('/favorites');
-    else if (filter === 'unread') navigate('/?filter=unread');
-    else if (filter === 'all') navigate('/');
-  };
-
   // Check if the user is trying to access a route they don't have permission for
   // Redirect to home if user tries to access programmijuht routes
   useEffect(() => {
@@ -162,31 +157,34 @@ const DashboardLayout = ({ children }) => {
           <ul>
             {/* Common menu items for both roles */}
             <li>
-              <button
+              <Link
+                to="/"
                 className={activeFilter === 'all' ? 'sidebar-active' : ''}
-                onClick={() => handleSidebarClick('all')}
+                onClick={() => setActiveFilter('all')}
               >
                 <MdNotifications />
                 Teated
-              </button>
+              </Link>
             </li>
             <li>
-              <button 
+              <Link 
+                to="/?filter=unread"
                 className={activeFilter === 'unread' ? 'sidebar-active' : ''} 
-                onClick={() => handleSidebarClick('unread')}
+                onClick={() => setActiveFilter('unread')}
               >
                 <MdMarkEmailUnread />
                 Lugemata
-              </button>
+              </Link>
             </li>
             <li>
-              <button 
+              <Link 
+                to="/favorites"
                 className={activeFilter === 'favorites' ? 'sidebar-active' : ''} 
-                onClick={() => handleSidebarClick('favorites')}
+                onClick={() => setActiveFilter('favorites')}
               >
                 <MdFavorite />
                 Lemmikud
-              </button>
+              </Link>
             </li>
 
             {/* Programmijuht specific menu items */}
@@ -196,19 +194,28 @@ const DashboardLayout = ({ children }) => {
                   <Link 
                     to="/my-notifications" 
                     className={activeFilter === 'my' ? 'sidebar-active' : ''}
+                    onClick={() => setActiveFilter('my')}
                   >
                     <MdPersonalVideo />
                     Minu teated
                   </Link>
                 </li>
                 <li>
-                  <Link to="/add-notification">
+                  <Link 
+                    to="/add-notification"
+                    className={activeFilter === 'add' ? 'sidebar-active' : ''}
+                    onClick={() => setActiveFilter('add')}
+                  >
                     <MdOutlinePostAdd />
                     Lisa uus teade
                   </Link>
                 </li>
                 <li>
-                  <Link to="/templates">
+                  <Link 
+                    to="/templates"
+                    className={activeFilter === 'templates' ? 'sidebar-active' : ''}
+                    onClick={() => setActiveFilter('templates')}
+                  >
                     <MdOutlineDescription />
                     Mallid
                   </Link>
@@ -217,10 +224,17 @@ const DashboardLayout = ({ children }) => {
             )}
 
             <li>
-              <button onClick={handleLogoutRequest} className="sidebar-logout">
+              <a 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleLogoutRequest();
+                }}
+                className="sidebar-logout"
+              >
                 <MdLogout />
                 Logi välja
-              </button>
+              </a>
             </li>
           </ul>
         </nav>
@@ -245,7 +259,10 @@ const DashboardLayout = ({ children }) => {
       </div>
       <ConfirmationModal
         open={modalOpen}
+        title="Logi välja"
         message="Oled kindel, et soovid välja logida?"
+        confirmText="Logi välja"
+        cancelText="Tühista"
         onConfirm={confirmLogout}
         onCancel={cancelLogout}
       />

@@ -38,7 +38,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background-color: #4682b4;
+  background-color: #4285f4;
   color: white;
   padding: 8px 16px;
   border-radius: 4px;
@@ -48,12 +48,12 @@
 }
 
 .create-template-button:hover {
-  background-color: #3a6d96;
+  background-color: #3367d6;
 }
 
 .templates-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 20px;
 }
 
@@ -109,12 +109,12 @@
 }
 
 .use-template {
-  background-color: #4682b4;
+  background-color: #4285f4;
   color: white;
 }
 
 .use-template:hover {
-  background-color: #3a6d96;
+  background-color: #3367d6;
 }
 
 .edit-template {

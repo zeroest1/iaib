@@ -6,6 +6,7 @@ import {
   useDeleteTemplateMutation,
   useGetTemplateByIdQuery
 } from '../../services/api';
+import ConfirmationModal from '../common/ConfirmationModal';
 import './styles/Templates.css';
 
 const TemplateList = () => {
@@ -99,43 +100,40 @@ const TemplateList = () => {
         </div>
       )}
 
-      {confirmationModal.show && (
-        <div className="confirmation-modal">
-          <div className="modal-content">
-            <h3>Kustuta mall</h3>
-            <p>Kas oled kindel, et soovid selle malli kustutada?</p>
-            <div className="modal-actions">
-              <button className="cancel-button" onClick={handleCancelDelete}>Tühista</button>
-              <button className="confirm-button" onClick={handleConfirmDelete}>Kustuta</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Delete confirmation modal */}
+      <ConfirmationModal
+        open={confirmationModal.show}
+        title="Kustuta mall"
+        message="Kas oled kindel, et soovid selle malli kustutada?"
+        confirmText="Kustuta"
+        cancelText="Tühista"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
 
-      {showInfoModal && (
-        <div className="confirmation-modal">
-          <div className="modal-content template-info-modal">
-            <h3>Mallide muutujate kasutamine</h3>
-            <div className="template-info-content">
-              <p>Mallides saad kasutada muutujaid, mis asendatakse teate loomisel reaalse sisuga.</p>
-              <h4>Kuidas kasutada:</h4>
-              <ol>
-                <li>Lisa mallile muutuja, kasutades loogelisi sulge, nt: <code>{"{kuupäev}"}</code></li>
-                <li>Kui lood teadet selle malliga, avaneb dialoog, kus saad sisestada väärtuse igale muutujale</li>
-                <li>Sama nimega muutujad asendatakse kõik sama väärtusega</li>
-              </ol>
-              <h4>Näidis:</h4>
-              <p>Kui mallil on sisu:</p>
-              <pre>Koosolek toimub {"{kuupäev}"} kell {"{kellaaeg}"}. Koht: {"{koht}"}. <br/>Kordan, {"{kuupäev}"} kell {"{kellaaeg}"}!</pre>
-              <p>Siis peale väärtuste sisestamist võib teade välja näha nii:</p>
-              <pre>Koosolek toimub 15.08.2023 kell 14:00. Koht: Ruum 305. <br/>Kordan, 15.08.2023 kell 14:00!</pre>
-            </div>
-            <div className="modal-actions">
-              <button className="confirm-button" onClick={() => setShowInfoModal(false)}>Sulge</button>
-            </div>
-          </div>
+      {/* Template info modal */}
+      <ConfirmationModal
+        open={showInfoModal}
+        title="Mallide muutujate kasutamine"
+        confirmText="Sulge"
+        onConfirm={() => setShowInfoModal(false)}
+        onCancel={() => setShowInfoModal(false)}
+      >
+        <div className="template-info-content">
+          <p>Mallides saad kasutada muutujaid, mis asendatakse teate loomisel reaalse sisuga.</p>
+          <h4>Kuidas kasutada:</h4>
+          <ol>
+            <li>Lisa mallile muutuja, kasutades loogelisi sulge, nt: <code>{"{kuupäev}"}</code></li>
+            <li>Kui lood teadet selle malliga, avaneb dialoog, kus saad sisestada väärtuse igale muutujale</li>
+            <li>Sama nimega muutujad asendatakse kõik sama väärtusega</li>
+          </ol>
+          <h4>Näidis:</h4>
+          <p>Kui mallil on sisu:</p>
+          <pre>Koosolek toimub {"{kuupäev}"} kell {"{kellaaeg}"}. Koht: {"{koht}"}. <br/>Kordan, {"{kuupäev}"} kell {"{kellaaeg}"}!</pre>
+          <p>Siis peale väärtuste sisestamist võib teade välja näha nii:</p>
+          <pre>Koosolek toimub 15.08.2023 kell 14:00. Koht: Ruum 305. <br/>Kordan, 15.08.2023 kell 14:00!</pre>
         </div>
-      )}
+      </ConfirmationModal>
     </div>
   );
 };

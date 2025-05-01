@@ -1,0 +1,112 @@
+/* Confirmation Modal Styles */
+.custom-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.custom-modal {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  padding: 2rem 2.5rem;
+  min-width: 320px;
+  max-width: 90vw;
+  text-align: center;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.custom-modal h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #333;
+  font-weight: 600;
+  font-size: 1.25rem;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.custom-modal p {
+  margin-bottom: 20px;
+  color: #555;
+  font-size: 1rem;
+  line-height: 1.5;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Form elements inside modals */
+.custom-modal .form-group {
+  margin-bottom: 20px;
+}
+
+.custom-modal input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.9rem;
+}
+
+.custom-modal label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Modal actions container */
+.custom-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* Button styles */
+.custom-modal-confirm {
+  background: #e4067e;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.custom-modal-confirm:hover {
+  background: #c0056a;
+}
+
+.custom-modal-cancel {
+  background: #fff;
+  color: #e4067e;
+  border: 1.5px solid #e4067e;
+  border-radius: 4px;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.custom-modal-cancel:hover {
+  background: #f7f7fa;
+  color: #c0056a;
+}
+
+/* Special styling for delete confirmation buttons */
+.delete-confirm-button {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.delete-confirm-button:hover {
+  background-color: #b71c1c;
+} 
