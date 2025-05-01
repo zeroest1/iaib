@@ -1,49 +1,75 @@
 .login-form {
-  max-width: 400px;
-  margin: 2rem auto;
-  padding: 24px;
+  max-width: 900px;
+  margin: 2.5rem auto;
+  padding: 40px 60px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
   font-family: 'Montserrat', sans-serif;
+  background: white;
 }
 
 .login-form h2 {
-  margin-bottom: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+  color: #333;
+  text-align: center;
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 1.5rem;
 }
 
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 1.05rem;
+  color: #444;
 }
 
 .form-group input {
   width: 100%;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 1.05rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #e4067e;
+  box-shadow: 0 0 0 2px rgba(228, 6, 126, 0.1);
 }
 
 .error-message {
-  color: red;
-  margin-bottom: 12px;
+  color: #e4067e;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: rgba(228, 6, 126, 0.1);
+  border-radius: 4px;
 }
 
 .submit-button {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
+  margin-top: 0.5rem;
   background: #e4067e;
   color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   font-weight: 600;
+  font-size: 1.1rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.1s;
 }
 
 .submit-button:hover {
   background: #c9066f;
+  transform: translateY(-1px);
+}
+
+.submit-button:active {
+  transform: translateY(0);
 } 
