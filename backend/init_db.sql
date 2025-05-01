@@ -3,6 +3,8 @@ DROP TABLE IF EXISTS notification_read_status CASCADE;
 DROP TABLE IF EXISTS favorites;
 DROP TABLE IF EXISTS notification_groups;
 DROP TABLE IF EXISTS user_groups;
+DROP TABLE IF EXISTS file_attachments;
+DROP TABLE IF EXISTS notification_templates;
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS groups;
@@ -43,6 +45,18 @@ CREATE TABLE notifications (
   priority VARCHAR(20),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   created_by INTEGER REFERENCES users(id)
+);
+
+-- Create notification_templates table
+CREATE TABLE notification_templates (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  category VARCHAR(50),
+  priority VARCHAR(20),
+  created_by INTEGER REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create notification_groups table (many-to-many relationship)

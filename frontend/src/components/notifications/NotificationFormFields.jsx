@@ -11,7 +11,8 @@ const NotificationFormFields = ({
   loadingText,
   availableGroups,
   selectedGroups,
-  handleGroupChange
+  handleGroupChange,
+  showGroupSelection = true
 }) => {
   const [groupSearchTerm, setGroupSearchTerm] = useState('');
   
@@ -42,6 +43,11 @@ const NotificationFormFields = ({
           placeholder="Sisesta pealkiri"
           required
         />
+        {!showGroupSelection && (
+          <small className="form-text text-muted">
+            Mallide pealkirjades saad kasutada muutujaid kujul {"{muutuja}"}
+          </small>
+        )}
       </div>
       <div className="form-group">
         <label htmlFor="content">Sisu</label>
@@ -54,6 +60,11 @@ const NotificationFormFields = ({
           placeholder="Sisesta teate sisu"
           required
         />
+        {!showGroupSelection && (
+          <small className="form-text text-muted">
+            Mallide sisus saad kasutada muutujaid kujul {"{muutuja}"}, näiteks {"{nimi}"}, {"{kuupäev}"}
+          </small>
+        )}
       </div>
       <div className="form-group">
         <label htmlFor="category">Kategooria</label>
@@ -90,99 +101,103 @@ const NotificationFormFields = ({
           ))}
         </select>
       </div>
-      <div className="form-group">
-        <label htmlFor="targetGroups">Sihtgrupid</label>
-        
-        <div className="group-search-container">
-          <input
-            type="text"
-            placeholder="Otsi gruppe..."
-            value={groupSearchTerm}
-            onChange={(e) => setGroupSearchTerm(e.target.value)}
-            className="group-search-input"
-          />
-        </div>
-        
-        <div className="checkbox-group">
-          <div className="checkbox-item">
+      
+      {showGroupSelection && (
+        <div className="form-group">
+          <label htmlFor="targetGroups">Sihtgrupid</label>
+          
+          <div className="group-search-container">
             <input
-              type="checkbox"
-              id="select-all-groups"
-              name="select-all-groups"
-              checked={selectedGroups.length === 0}
-              onChange={() => handleGroupChange([])}
+              type="text"
+              placeholder="Otsi gruppe..."
+              value={groupSearchTerm}
+              onChange={(e) => setGroupSearchTerm(e.target.value)}
+              className="group-search-input"
             />
-            <label htmlFor="select-all-groups">Kõik grupid (avalik)</label>
           </div>
           
-          {/* Role groups section */}
-          {filteredRoleGroups.length > 0 && (
-            <div className="group-section">
-              <h4>Rollipõhised grupid {groupSearchTerm && filteredRoleGroups.length !== roleGroups.length && `(${filteredRoleGroups.length}/${roleGroups.length})`}</h4>
-              {filteredRoleGroups.map(group => (
-                <div key={group.id} className="checkbox-item role-group-item">
-                  <input
-                    type="checkbox"
-                    id={`group-${group.id}`}
-                    name={`group-${group.id}`}
-                    value={group.id}
-                    checked={selectedGroups.includes(group.id)}
-                    onChange={(e) => {
-                      const groupId = parseInt(e.target.value, 10);
-                      if (selectedGroups.includes(groupId)) {
-                        handleGroupChange(selectedGroups.filter(id => id !== groupId));
-                      } else {
-                        handleGroupChange([...selectedGroups, groupId]);
-                      }
-                    }}
-                  />
-                  <label htmlFor={`group-${group.id}`}>{group.name}</label>
-                </div>
-              ))}
+          <div className="checkbox-group">
+            <div className="checkbox-item">
+              <input
+                type="checkbox"
+                id="select-all-groups"
+                name="select-all-groups"
+                checked={selectedGroups.length === 0}
+                onChange={() => handleGroupChange([])}
+              />
+              <label htmlFor="select-all-groups">Kõik grupid (avalik)</label>
             </div>
-          )}
-          
-          {/* Regular groups section */}
-          {filteredRegularGroups.length > 0 && (
-            <div className="group-section">
-              <h4>Regulaarsed grupid {groupSearchTerm && filteredRegularGroups.length !== regularGroups.length && `(${filteredRegularGroups.length}/${regularGroups.length})`}</h4>
-              {filteredRegularGroups.map(group => (
-                <div key={group.id} className="checkbox-item">
-                  <input
-                    type="checkbox"
-                    id={`group-${group.id}`}
-                    name={`group-${group.id}`}
-                    value={group.id}
-                    checked={selectedGroups.includes(group.id)}
-                    onChange={(e) => {
-                      const groupId = parseInt(e.target.value, 10);
-                      if (selectedGroups.includes(groupId)) {
-                        handleGroupChange(selectedGroups.filter(id => id !== groupId));
-                      } else {
-                        handleGroupChange([...selectedGroups, groupId]);
-                      }
-                    }}
-                  />
-                  <label htmlFor={`group-${group.id}`}>{group.name}</label>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {groupSearchTerm && filteredRoleGroups.length === 0 && filteredRegularGroups.length === 0 && (
-            <div className="no-groups-found">
-              Ei leidnud ühtegi gruppi otsingule: "{groupSearchTerm}"
-            </div>
-          )}
+            
+            {/* Role groups section */}
+            {filteredRoleGroups.length > 0 && (
+              <div className="group-section">
+                <h4>Rollipõhised grupid {groupSearchTerm && filteredRoleGroups.length !== roleGroups.length && `(${filteredRoleGroups.length}/${roleGroups.length})`}</h4>
+                {filteredRoleGroups.map(group => (
+                  <div key={group.id} className="checkbox-item role-group-item">
+                    <input
+                      type="checkbox"
+                      id={`group-${group.id}`}
+                      name={`group-${group.id}`}
+                      value={group.id}
+                      checked={selectedGroups.includes(group.id)}
+                      onChange={(e) => {
+                        const groupId = parseInt(e.target.value, 10);
+                        if (selectedGroups.includes(groupId)) {
+                          handleGroupChange(selectedGroups.filter(id => id !== groupId));
+                        } else {
+                          handleGroupChange([...selectedGroups, groupId]);
+                        }
+                      }}
+                    />
+                    <label htmlFor={`group-${group.id}`}>{group.name}</label>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Regular groups section */}
+            {filteredRegularGroups.length > 0 && (
+              <div className="group-section">
+                <h4>Regulaarsed grupid {groupSearchTerm && filteredRegularGroups.length !== regularGroups.length && `(${filteredRegularGroups.length}/${regularGroups.length})`}</h4>
+                {filteredRegularGroups.map(group => (
+                  <div key={group.id} className="checkbox-item">
+                    <input
+                      type="checkbox"
+                      id={`group-${group.id}`}
+                      name={`group-${group.id}`}
+                      value={group.id}
+                      checked={selectedGroups.includes(group.id)}
+                      onChange={(e) => {
+                        const groupId = parseInt(e.target.value, 10);
+                        if (selectedGroups.includes(groupId)) {
+                          handleGroupChange(selectedGroups.filter(id => id !== groupId));
+                        } else {
+                          handleGroupChange([...selectedGroups, groupId]);
+                        }
+                      }}
+                    />
+                    <label htmlFor={`group-${group.id}`}>{group.name}</label>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {groupSearchTerm && filteredRoleGroups.length === 0 && filteredRegularGroups.length === 0 && (
+              <div className="no-groups-found">
+                Ei leidnud ühtegi gruppi otsingule: "{groupSearchTerm}"
+              </div>
+            )}
+          </div>
+          <div className="groups-info">
+            {selectedGroups.length === 0 ? (
+              <span className="groups-hint">Teade on nähtav kõigile kasutajatele</span>
+            ) : (
+              <span className="groups-hint">Teade on nähtav ainult valitud gruppidele</span>
+            )}
+          </div>
         </div>
-        <div className="groups-info">
-          {selectedGroups.length === 0 ? (
-            <span className="groups-hint">Teade on nähtav kõigile kasutajatele</span>
-          ) : (
-            <span className="groups-hint">Teade on nähtav ainult valitud gruppidele</span>
-          )}
-        </div>
-      </div>
+      )}
+      
       {error && <p className="error-message">{error}</p>}
       <button type="submit" className="submit-button" disabled={isSubmitting}>
         {isSubmitting ? loadingText : submitButtonText}

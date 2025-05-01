@@ -12,6 +12,7 @@ import DashboardLayout from './layout/DashboardLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import RoleProtectedRoute from './components/auth/RoleProtectedRoute';
 import { useGetMeQuery } from './services/api';
+import TemplateList from './components/templates/TemplateList';
 import './App.css';
 
 function App() {
@@ -35,7 +36,11 @@ function App() {
           <Route element={<RoleProtectedRoute allowedRoles={['programmijuht']} />}>
             <Route path="/my-notifications" element={<DashboardLayout><NotificationList showMyNotifications={true} /></DashboardLayout>} />
             <Route path="/add-notification" element={<DashboardLayout><NotificationForm /></DashboardLayout>} />
+            <Route path="/notifications/new" element={<DashboardLayout><NotificationForm /></DashboardLayout>} />
             <Route path="/notifications/:id/edit" element={<DashboardLayout><NotificationEdit /></DashboardLayout>} />
+            <Route path="/templates" element={<DashboardLayout><TemplateList /></DashboardLayout>} />
+            <Route path="/templates/new" element={<DashboardLayout><NotificationForm isTemplate={true} /></DashboardLayout>} />
+            <Route path="/templates/edit/:id" element={<DashboardLayout><NotificationForm isTemplate={true} isEdit={true} /></DashboardLayout>} />
           </Route>
         </Routes>
       </div>

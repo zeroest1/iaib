@@ -46,7 +46,7 @@ const axiosBaseQuery =
 export const api = createApi({
   reducerPath: 'api',
   baseQuery: axiosBaseQuery({ baseUrl: API_BASE_URL }),
-  tagTypes: ['Auth', 'Notifications', 'Favorites', 'ReadStatus', 'Groups', 'UserGroups'],
+  tagTypes: ['Auth', 'Notifications', 'Favorites', 'ReadStatus', 'Groups', 'UserGroups', 'Templates'],
   endpoints: (builder) => ({
     login: builder.mutation({
       query: (credentials) => ({ url: '/auth/login', method: 'post', data: credentials }),
@@ -175,6 +175,29 @@ export const api = createApi({
       query: (notificationId) => ({ url: `/notifications/${notificationId}/read-status`, method: 'get' }),
       providesTags: (result, error, id) => [{ type: 'ReadStatus', id }],
     }),
+    // Template endpoints
+    getTemplates: builder.query({
+      query: () => ({ url: '/templates', method: 'get' }),
+      providesTags: ['Templates'],
+      keepUnusedDataFor: 60,
+    }),
+    getTemplateById: builder.query({
+      query: (id) => ({ url: `/templates/${id}`, method: 'get' }),
+      providesTags: (result, error, id) => [{ type: 'Templates', id }],
+      keepUnusedDataFor: 60,
+    }),
+    createTemplate: builder.mutation({
+      query: (template) => ({ url: '/templates', method: 'post', data: template }),
+      invalidatesTags: ['Templates'],
+    }),
+    updateTemplate: builder.mutation({
+      query: ({ id, ...template }) => ({ url: `/templates/${id}`, method: 'put', data: template }),
+      invalidatesTags: ['Templates'],
+    }),
+    deleteTemplate: builder.mutation({
+      query: (id) => ({ url: `/templates/${id}`, method: 'delete' }),
+      invalidatesTags: ['Templates'],
+    }),
   }),
 });
 
@@ -198,4 +221,9 @@ export const {
   useGetUserGroupsQuery,
   useGetNotificationGroupsQuery,
   useGetNotificationReadStatusQuery,
+  useGetTemplatesQuery,
+  useGetTemplateByIdQuery,
+  useCreateTemplateMutation,
+  useUpdateTemplateMutation,
+  useDeleteTemplateMutation,
 } = api; 

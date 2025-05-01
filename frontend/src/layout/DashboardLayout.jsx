@@ -11,7 +11,8 @@ import {
   MdMarkEmailUnread, 
   MdFavorite, 
   MdPersonalVideo, 
-  MdLogout 
+  MdLogout,
+  MdOutlineDescription
 } from 'react-icons/md';
 
 const DashboardLayout = ({ children }) => {
@@ -204,6 +205,12 @@ const DashboardLayout = ({ children }) => {
                   <Link to="/add-notification">
                     <MdOutlinePostAdd />
                     Lisa uus teade
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/templates">
+                    <MdOutlineDescription />
+                    Mallid
                   </Link>
                 </li>
               </>
