@@ -3,8 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaPlus, FaEdit, FaTrash, FaCopy, FaInfoCircle, FaUsers } from 'react-icons/fa';
 import { 
   useGetTemplatesQuery, 
-  useDeleteTemplateMutation,
-  useGetTemplateByIdQuery
+  useDeleteTemplateMutation
 } from '../../services/api';
 import ConfirmationModal from '../common/ConfirmationModal';
 import './styles/Templates.css';
@@ -120,6 +119,7 @@ const TemplateList = () => {
         cancelText="Tühista"
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
+        isDelete={true}
       />
 
       {/* Template info modal */}

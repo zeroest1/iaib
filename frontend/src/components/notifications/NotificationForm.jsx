@@ -1,6 +1,6 @@
 // src/components/NotificationForm.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import './styles/NotificationForm.css';
 import { 
@@ -48,7 +48,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
   const [templateVariables, setTemplateVariables] = useState({});
   const [variableValues, setVariableValues] = useState({});
   const navigate = useNavigate();
-  const location = useLocation();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const templateIdFromUrl = searchParams.get('template');
@@ -62,7 +61,7 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
   
   // Always call the hooks, but skip requests when not needed
   const skipTemplateDataFetch = !(isEdit && isTemplate && id);
-  const { data: templateData, isLoading: templateLoading, error: templateError } = useGetTemplateByIdQuery(id || 0, {
+  const { data: templateData, isLoading: templateLoading } = useGetTemplateByIdQuery(id || 0, {
     skip: skipTemplateDataFetch
   });
 

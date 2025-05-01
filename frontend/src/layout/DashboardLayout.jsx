@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../features/authSlice';
@@ -39,28 +39,31 @@ const DashboardLayout = ({ children }) => {
   };
 
   // Close sidebar when clicking outside or changing routes
-  const closeSidebar = () => {
+  const closeSidebar = useCallback(() => {
     if (sidebarOpen) {
       setSidebarOpen(false);
     }
-  };
+  }, [sidebarOpen]);
 
   // Close sidebar on route change
   useEffect(() => {
     closeSidebar();
-  }, [location]);
+  }, [location, closeSidebar]);
 
   // RTK Query hooks - request all notifications by setting a high limit
   const { data = {}, isLoading: notificationsLoading } = useGetNotificationsQuery({ 
     my: false,
     limit: 100 // Request more items to get a more accurate count
   });
-  const notifications = data.notifications || [];
-  const totalCount = data.pagination?.total || 0;
+  
+  // Memoize the notifications and totalCount to avoid dependency issues
+  const { memoizedNotifications, memoizedTotalCount } = React.useMemo(() => ({
+    memoizedNotifications: data.notifications || [],
+    memoizedTotalCount: data.pagination?.total || 0
+  }), [data.notifications, data.pagination?.total]);
   
   const { 
     data: readStatusData = [], 
-    isLoading: readStatusLoading,
     isSuccess: readStatusSuccess 
   } = useGetReadStatusQuery();
   const { data: userGroups = [], isLoading: userGroupsLoading } = useGetUserGroupsQuery();
@@ -98,8 +101,8 @@ const DashboardLayout = ({ children }) => {
     const status = {};
     
     // Mark all notifications as unread by default
-    if (notifications && notifications.length > 0) {
-      notifications.forEach(notification => {
+    if (memoizedNotifications && memoizedNotifications.length > 0) {
+      memoizedNotifications.forEach(notification => {
         status[notification.id] = false;
       });
     }
@@ -112,30 +115,30 @@ const DashboardLayout = ({ children }) => {
     }
     
     return status;
-  }, [notifications, readStatusData, readStatusSuccess]);
+  }, [memoizedNotifications, readStatusData, readStatusSuccess]);
 
   // Calculate unread count
   const unreadCount = React.useMemo(() => {
     if (notificationsLoading) return 0;
     
     // For new users with no readStatusData, all notifications are unread
-    if (totalCount > 0 && (!readStatusData || readStatusData.length === 0)) {
-      return totalCount; // If no read status data, all notifications are unread
+    if (memoizedTotalCount > 0 && (!readStatusData || readStatusData.length === 0)) {
+      return memoizedTotalCount; // If no read status data, all notifications are unread
     }
     
     // If we have the total from pagination metadata but don't have all notifications loaded
-    if (totalCount > notifications.length && readStatusData && readStatusData.length > 0) {
+    if (memoizedTotalCount > memoizedNotifications.length && readStatusData && readStatusData.length > 0) {
       // Calculate the number of notifications that have a read status
       const readNotifications = readStatusData.filter(item => item.read).length;
       // Unread count is total notifications minus read notifications
-      return totalCount - readNotifications;
+      return memoizedTotalCount - readNotifications;
     }
     
     // Regular calculation using loaded notifications
-    return notifications.filter(notification => 
+    return memoizedNotifications.filter(notification => 
       readStatus[notification.id] === undefined || readStatus[notification.id] === false
     ).length;
-  }, [notifications, readStatus, notificationsLoading, readStatusData, totalCount]);
+  }, [memoizedNotifications, readStatus, notificationsLoading, readStatusData, memoizedTotalCount]);
 
   const handleLogoutRequest = () => {
     setModalOpen(true);
@@ -280,17 +283,13 @@ const DashboardLayout = ({ children }) => {
           </nav>
           
           <div className="sidebar-footer">
-            <a 
-              href="#" 
-              onClick={(e) => {
-                e.preventDefault();
-                handleLogoutRequest();
-              }}
+            <button 
+              onClick={handleLogoutRequest}
               className="sidebar-logout"
             >
               <MdLogout />
               Logi välja
-            </a>
+            </button>
           </div>
         </aside>
 

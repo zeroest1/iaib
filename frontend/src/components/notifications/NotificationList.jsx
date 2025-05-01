@@ -1,6 +1,6 @@
 // src/components/NotificationList.jsx
-import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import './styles/NotificationList.css';
 import NotificationItem from './NotificationItem';
@@ -10,7 +10,6 @@ import ConfirmationModal from '../common/ConfirmationModal';
 import { POLLING_INTERVAL } from './constants';
 import {
   calculateReadStatus,
-  calculateUnreadCount,
   getPageTitle,
   getFilterDescription
 } from './utils';
@@ -25,7 +24,7 @@ import {
   useSearchNotificationsQuery
 } from '../../services/api';
 
-const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavoritesChange, filter = 'all', onUnreadChange, showMyNotifications = false }) => {
+const NotificationList = ({ filter = 'all', onFavoritesChange, onUnreadChange }) => {
   const { user } = useSelector(state => state.auth);
   const location = useLocation();
   const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
@@ -37,7 +36,6 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   const [modalOpen, setModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState(null);
   const [modalMessage, setModalMessage] = useState('');
-  const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const priorityDropdownRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -48,15 +46,15 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     totalPages: 1
   });
   
-  // Set local state based on path
-  const [isMyNotifications, setIsMyNotifications] = useState(showMyNotifications || location.pathname === '/my-notifications');
+  // Get view type from URL
+  const showFavoritesOnly = location.pathname === '/favorites';
+  const isMyNotifications = location.pathname === '/my-notifications';
 
   // Update local state when path changes
   useEffect(() => {
-    setIsMyNotifications(showMyNotifications || location.pathname === '/my-notifications');
     // Reset to page 1 when changing views
     setCurrentPage(1);
-  }, [location.pathname, showMyNotifications]);
+  }, [location.pathname]);
 
   // Debounce search term to avoid too many API calls
   useEffect(() => {
@@ -75,7 +73,6 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   // Determine if we should use server-side pagination or client-side pagination
   // Use client-side pagination for filtered views (favorites, unread)
   const useClientPagination = showFavoritesOnly || 
-                             location.pathname === '/favorites' || 
                              filter === 'unread' ||
                              selectedCategories.length > 0 ||
                              selectedPriorities.length > 0;
@@ -115,7 +112,6 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   
   const { 
     data: readStatusData = [], 
-    isLoading: readStatusLoading,
     isSuccess: readStatusSuccess 
   } = useGetReadStatusQuery();
   
@@ -132,12 +128,6 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   const readStatus = useMemo(() => 
     calculateReadStatus(currentNotifications, readStatusData, readStatusSuccess),
     [currentNotifications, readStatusData, readStatusSuccess]
-  );
-
-  // Calculate unread count
-  const unreadCount = useMemo(() => 
-    calculateUnreadCount(currentNotifications, readStatus, isLoading, readStatusData),
-    [currentNotifications, readStatus, isLoading, readStatusData]
   );
 
   // Combine dropdown outside click logic
@@ -222,14 +212,14 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     // For search results we don't need to filter by path condition as the API already handles that
     if (!useSearchQuery) {
       // If we're already fetching my notifications from the API, no need to filter again
-      // Otherwise, apply my notifications filter if enabled through UI actions
-      if (!isMyNotifications && location.pathname === '/my-notifications') {
+      // Otherwise, apply my notifications filter if enabled through path
+      if (location.pathname === '/my-notifications') {
         result = result.filter(n => n.created_by === user?.id);
       }
     }
     
-    // Apply favorites filter if enabled
-    if (showFavoritesOnly || location.pathname === '/favorites') {
+    // Apply favorites filter if enabled via path
+    if (location.pathname === '/favorites') {
       result = result.filter(n => favoritesData.some(f => f.notification_id === n.id));
     }
     
@@ -258,12 +248,10 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   }, [
     currentNotifications, 
     favoritesData, 
-    showFavoritesOnly, 
     filter, 
     readStatus, 
     selectedPriorities, 
     selectedCategories, 
-    isMyNotifications, 
     user, 
     location.pathname,
     isLoading,
@@ -337,11 +325,6 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
     readStatus
   ]);
 
-  // Calculate filtered unread count for current page (for display in the list)
-  const filteredUnreadCount = useMemo(() => {
-    return filteredNotifications.filter(n => readStatus[n.id] === false).length;
-  }, [filteredNotifications, readStatus]);
-
   // Debug pagination
   useEffect(() => {
     if (useClientPagination && allFilteredNotifications.length > 10) {
@@ -377,7 +360,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
           setDropdownOpen={setDropdownOpen}
           priorityDropdownOpen={priorityDropdownOpen}
           setPriorityDropdownOpen={setPriorityDropdownOpen}
-            dropdownRef={dropdownRef}
+          dropdownRef={dropdownRef}
           priorityDropdownRef={priorityDropdownRef}
           filteredCount={useClientPagination ? localPagination.total : currentPagination.total}
           filterDescription={filterDescriptionText}

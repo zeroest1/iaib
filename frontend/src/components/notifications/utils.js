@@ -1,6 +1,6 @@
 // Import constants for notification categories and priorities
 import { NOTIFICATION_CATEGORIES, NOTIFICATION_PRIORITIES } from './constants';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { et } from 'date-fns/locale';
 

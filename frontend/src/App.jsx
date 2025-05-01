@@ -1,12 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 import NotificationForm from './components/notifications/NotificationForm';
 import NotificationList from './components/notifications/NotificationList';
 import NotificationDetail from './components/notifications/NotificationDetail';
 import NotificationEdit from './components/notifications/NotificationEdit';
-import Login from './components/auth/Login';
-import Register from './components/auth/Register';
 import AuthPage from './components/auth/AuthPage';
 import DashboardLayout from './layout/DashboardLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -28,13 +24,13 @@ function App() {
           <Route element={<ProtectedRoute />}>
             {/* Main notification views - same for both roles */}
             <Route path="/" element={<DashboardLayout><NotificationList /></DashboardLayout>} />
-            <Route path="/favorites" element={<DashboardLayout><NotificationList showFavoritesOnly={true} /></DashboardLayout>} />
+            <Route path="/favorites" element={<DashboardLayout><NotificationList /></DashboardLayout>} />
             <Route path="/notifications/:id" element={<DashboardLayout><NotificationDetail /></DashboardLayout>} />
           </Route>
           
           {/* Programmijuht specific routes */}
           <Route element={<RoleProtectedRoute allowedRoles={['programmijuht']} />}>
-            <Route path="/my-notifications" element={<DashboardLayout><NotificationList showMyNotifications={true} /></DashboardLayout>} />
+            <Route path="/my-notifications" element={<DashboardLayout><NotificationList /></DashboardLayout>} />
             <Route path="/add-notification" element={<DashboardLayout><NotificationForm /></DashboardLayout>} />
             <Route path="/notifications/new" element={<DashboardLayout><NotificationForm /></DashboardLayout>} />
             <Route path="/notifications/:id/edit" element={<DashboardLayout><NotificationEdit /></DashboardLayout>} />

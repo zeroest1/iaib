@@ -1,6 +1,6 @@
 // src/components/NotificationDetail.jsx
 import React from 'react';
-import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { MdArrowBack, MdEdit, MdOutlineVisibility } from 'react-icons/md';
 import './styles/NotificationDetail.css';
@@ -13,7 +13,6 @@ import { formatDate } from './utils';
 
 const NotificationDetail = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const location = useLocation();
   const { user } = useSelector(state => state.auth);
   
@@ -25,12 +24,6 @@ const NotificationDetail = () => {
     useGetNotificationReadStatusQuery(id, {
       skip: !notification || notification?.created_by !== user?.id
     });
-
-  const handleBack = () => {
-    // Check if we have a stored previous location
-    const previousPath = location.state?.from || '/';
-    navigate(previousPath);
-  };
 
   const getPriorityText = (priority) => {
     switch (priority) {
