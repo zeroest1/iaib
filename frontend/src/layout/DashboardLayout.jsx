@@ -14,6 +14,7 @@ import {
   MdLogout,
   MdOutlineDescription
 } from 'react-icons/md';
+import TalTechLogo from '../assets/taltech-logo.svg';
 
 const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
@@ -151,112 +152,120 @@ const DashboardLayout = ({ children }) => {
 
   return (
     <div className="dashboard-layout">
-      <aside className="sidebar">
-        <div className="sidebar-title">Teavitussüsteem</div>
-        <nav>
-          <ul>
-            {/* Common menu items for both roles */}
-            <li>
-              <Link
-                to="/"
-                className={activeFilter === 'all' ? 'sidebar-active' : ''}
-                onClick={() => setActiveFilter('all')}
-              >
-                <MdNotifications />
-                Teated
-              </Link>
-            </li>
-            <li>
-              <Link 
-                to="/?filter=unread"
-                className={activeFilter === 'unread' ? 'sidebar-active' : ''} 
-                onClick={() => setActiveFilter('unread')}
-              >
-                <MdMarkEmailUnread />
-                Lugemata
-              </Link>
-            </li>
-            <li>
-              <Link 
-                to="/favorites"
-                className={activeFilter === 'favorites' ? 'sidebar-active' : ''} 
-                onClick={() => setActiveFilter('favorites')}
-              >
-                <MdFavorite />
-                Lemmikud
-              </Link>
-            </li>
-
-            {/* Programmijuht specific menu items */}
-            {user?.role === 'programmijuht' && (
-              <>
-                <li>
-                  <Link 
-                    to="/my-notifications" 
-                    className={activeFilter === 'my' ? 'sidebar-active' : ''}
-                    onClick={() => setActiveFilter('my')}
-                  >
-                    <MdPersonalVideo />
-                    Minu teated
-                  </Link>
-                </li>
-                <li>
-                  <Link 
-                    to="/add-notification"
-                    className={activeFilter === 'add' ? 'sidebar-active' : ''}
-                    onClick={() => setActiveFilter('add')}
-                  >
-                    <MdOutlinePostAdd />
-                    Lisa uus teade
-                  </Link>
-                </li>
-                <li>
-                  <Link 
-                    to="/templates"
-                    className={activeFilter === 'templates' ? 'sidebar-active' : ''}
-                    onClick={() => setActiveFilter('templates')}
-                  >
-                    <MdOutlineDescription />
-                    Mallid
-                  </Link>
-                </li>
-              </>
-            )}
-
-            <li>
-              <a 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleLogoutRequest();
-                }}
-                className="sidebar-logout"
-              >
-                <MdLogout />
-                Logi välja
-              </a>
-            </li>
-          </ul>
-        </nav>
-      </aside>
-      <div className="main-content">
-        <header className="dashboard-header">
-          {user && (
-            <div className="user-info">
-              <div className="user-details">
-                <span className="user-name">{user.name}</span>
-                <span className="user-role">({user.role === 'programmijuht' ? 'Programmijuht' : 'Tudeng'})</span>
-              </div>
-              <div className="user-groups">
-                {userGroupsLoading ? 'Laen gruppe...' : formatUserGroupInfo()}
-              </div>
+      <header className="dashboard-header">
+        <img src={TalTechLogo} alt="TalTech Logo" className="header-logo" />
+        {user && (
+          <div className="user-info">
+            <div className="user-details">
+              <span className="user-name">{user.name}</span>
+              <span className="user-role">{user.role === 'programmijuht' ? 'Programmijuht' : 'Tudeng'}</span>
             </div>
-          )}
-        </header>
-        <div className="dashboard-children">
-          {childrenWithProps}
+            <div className="user-groups">
+              {userGroupsLoading ? 'Laen gruppe...' : formatUserGroupInfo()}
+            </div>
+          </div>
+        )}
+      </header>
+      
+      <div className="content-wrapper">
+        <aside className="sidebar">
+          <div className="sidebar-title">Teavitussüsteem</div>
+          
+          <nav className="sidebar-nav">
+            <ul>
+              {/* Common menu items for both roles */}
+              <li>
+                <Link
+                  to="/"
+                  className={activeFilter === 'all' ? 'sidebar-active' : ''}
+                  onClick={() => setActiveFilter('all')}
+                >
+                  <MdNotifications />
+                  Teated
+                  {unreadCount > 0 && <span className="unread-badge">{unreadCount}</span>}
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/?filter=unread"
+                  className={activeFilter === 'unread' ? 'sidebar-active' : ''} 
+                  onClick={() => setActiveFilter('unread')}
+                >
+                  <MdMarkEmailUnread />
+                  Lugemata
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/favorites"
+                  className={activeFilter === 'favorites' ? 'sidebar-active' : ''} 
+                  onClick={() => setActiveFilter('favorites')}
+                >
+                  <MdFavorite />
+                  Lemmikud
+                </Link>
+              </li>
+
+              {/* Programmijuht specific menu items */}
+              {user?.role === 'programmijuht' && (
+                <>
+                  <li>
+                    <Link 
+                      to="/my-notifications" 
+                      className={activeFilter === 'my' ? 'sidebar-active' : ''}
+                      onClick={() => setActiveFilter('my')}
+                    >
+                      <MdPersonalVideo />
+                      Minu teated
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/add-notification"
+                      className={activeFilter === 'add' ? 'sidebar-active' : ''}
+                      onClick={() => setActiveFilter('add')}
+                    >
+                      <MdOutlinePostAdd />
+                      Lisa uus teade
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      to="/templates"
+                      className={activeFilter === 'templates' ? 'sidebar-active' : ''}
+                      onClick={() => setActiveFilter('templates')}
+                    >
+                      <MdOutlineDescription />
+                      Mallid
+                    </Link>
+                  </li>
+                </>
+              )}
+            </ul>
+          </nav>
+          
+          <div className="sidebar-footer">
+            <a 
+              href="#" 
+              onClick={(e) => {
+                e.preventDefault();
+                handleLogoutRequest();
+              }}
+              className="sidebar-logout"
+            >
+              <MdLogout />
+              Logi välja
+            </a>
+          </div>
+        </aside>
+
+        <div className="main-content">
+          <div className="dashboard-children">
+            {childrenWithProps}
+          </div>
         </div>
       </div>
+
       <ConfirmationModal
         open={modalOpen}
         title="Logi välja"

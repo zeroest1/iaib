@@ -50,7 +50,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
   
   // Set local state based on path
   const [isMyNotifications, setIsMyNotifications] = useState(showMyNotifications || location.pathname === '/my-notifications');
-  
+
   // Update local state when path changes
   useEffect(() => {
     setIsMyNotifications(showMyNotifications || location.pathname === '/my-notifications');
@@ -212,7 +212,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
       window.scrollTo(0, 0);
     }
   };
-  
+
   // Memoize filtered notifications
   const allFilteredNotifications = useMemo(() => {
     if (isLoading) return [];
@@ -377,7 +377,7 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
           setDropdownOpen={setDropdownOpen}
           priorityDropdownOpen={priorityDropdownOpen}
           setPriorityDropdownOpen={setPriorityDropdownOpen}
-          dropdownRef={dropdownRef}
+            dropdownRef={dropdownRef}
           priorityDropdownRef={priorityDropdownRef}
           filteredCount={useClientPagination ? localPagination.total : currentPagination.total}
           filterDescription={filterDescriptionText}
@@ -410,23 +410,23 @@ const NotificationList = ({ showFavoritesOnly = false, favorites = [], onFavorit
                   {currentPagination.totalPages > 1 && ` (lehekülg ${currentPagination.page}/${currentPagination.totalPages})`}
                 </div>
               )
-            )}
-          </div>
-          <ul className="notifications">
-            {filteredNotifications.map((notification) => (
-              <NotificationItem
-                key={notification.id}
-                notification={notification}
+          )}
+        </div>
+        <ul className="notifications">
+          {filteredNotifications.map((notification) => (
+            <NotificationItem
+              key={notification.id}
+              notification={notification}
                 userRole={user?.role}
                 userId={user?.id}
-                readStatus={readStatus}
+              readStatus={readStatus}
                 onMarkAsRead={handleMarkAsRead}
-                onToggleFavorite={toggleFavorite}
+              onToggleFavorite={toggleFavorite}
                 onDelete={(isMyNotifications || location.pathname === '/my-notifications') ? handleDelete : null}
                 isFavorite={favoritesData.some(f => f.notification_id === notification.id)}
-              />
-            ))}
-          </ul>
+            />
+          ))}
+        </ul>
           
           {/* Use more reliable condition here to always show pagination when needed */}
           {(useClientPagination ? 

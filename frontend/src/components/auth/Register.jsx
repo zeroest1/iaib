@@ -101,7 +101,7 @@ const Register = () => {
             value={form.role}
             onChange={handleChange}
           >
-            <option value="tudeng">Õpilane</option>
+            <option value="tudeng">Tudeng</option>
             <option value="programmijuht">Programmijuht</option>
           </select>
         </div>
