@@ -45,4 +45,39 @@
 
 .tab-button:hover:not(.active) {
   background: #f0f0f0;
+}
+
+/* Add these responsive styles at the end of the file */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .auth-container {
+    max-width: 90%;
+    padding: 30px 40px;
+    margin: 2rem auto;
+  }
+  
+  .tab-button {
+    padding: 12px 30px;
+    font-size: 1rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 576px) {
+  .auth-container {
+    max-width: 95%;
+    padding: 25px 20px;
+    margin: 1.5rem auto;
+    border-radius: 6px;
+  }
+  
+  .tab-buttons {
+    margin-bottom: 1.5rem;
+  }
+  
+  .tab-button {
+    padding: 10px 20px;
+    font-size: 0.95rem;
+  }
 } 

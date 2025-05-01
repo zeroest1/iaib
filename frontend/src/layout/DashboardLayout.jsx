@@ -12,7 +12,9 @@ import {
   MdFavorite, 
   MdPersonalVideo, 
   MdLogout,
-  MdOutlineDescription
+  MdOutlineDescription,
+  MdMenu,
+  MdClose
 } from 'react-icons/md';
 import TalTechLogo from '../assets/taltech-logo.svg';
 
@@ -29,6 +31,24 @@ const DashboardLayout = ({ children }) => {
     return 'all';
   });
   const [modalOpen, setModalOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Toggle sidebar for mobile
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  // Close sidebar when clicking outside or changing routes
+  const closeSidebar = () => {
+    if (sidebarOpen) {
+      setSidebarOpen(false);
+    }
+  };
+
+  // Close sidebar on route change
+  useEffect(() => {
+    closeSidebar();
+  }, [location]);
 
   // RTK Query hooks - request all notifications by setting a high limit
   const { data = {}, isLoading: notificationsLoading } = useGetNotificationsQuery({ 
@@ -153,7 +173,16 @@ const DashboardLayout = ({ children }) => {
   return (
     <div className="dashboard-layout">
       <header className="dashboard-header">
-        <img src={TalTechLogo} alt="TalTech Logo" className="header-logo" />
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <button 
+            className="sidebar-toggle mobile-toggle"
+            onClick={toggleSidebar}
+            aria-label="Toggle navigation"
+          >
+            {sidebarOpen ? <MdClose /> : <MdMenu />}
+          </button>
+          <img src={TalTechLogo} alt="TalTech Logo" className="header-logo" />
+        </div>
         {user && (
           <div className="user-info">
             <div className="user-details">
@@ -168,7 +197,13 @@ const DashboardLayout = ({ children }) => {
       </header>
       
       <div className="content-wrapper">
-        <aside className="sidebar">
+        {/* Overlay for mobile */}
+        <div 
+          className={`sidebar-overlay ${sidebarOpen ? 'sidebar-overlay-visible' : ''}`} 
+          onClick={closeSidebar}
+        ></div>
+        
+        <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
           <div className="sidebar-title">Teavitussüsteem</div>
           
           <nav className="sidebar-nav">

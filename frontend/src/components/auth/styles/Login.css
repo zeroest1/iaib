@@ -72,4 +72,45 @@
 
 .submit-button:active {
   transform: translateY(0);
+}
+
+/* Add responsive styles */
+@media (max-width: 768px) {
+  .login-form {
+    max-width: 90%;
+    padding: 30px 40px;
+    margin: 2rem auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .login-form {
+    max-width: 95%;
+    padding: 25px 20px;
+    margin: 1.5rem auto;
+    border-radius: 6px;
+  }
+  
+  .login-form h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.2rem;
+  }
+  
+  .form-group label {
+    font-size: 1rem;
+  }
+  
+  .form-group input {
+    padding: 10px 12px;
+    font-size: 1rem;
+  }
+  
+  .submit-button {
+    padding: 10px;
+    font-size: 1rem;
+  }
 } 

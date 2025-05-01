@@ -112,27 +112,45 @@ export const getFilterDescription = (isMyNotifications, showFavoritesOnly, filte
     description.push('Kõik teated');
   }
   
+  // Check if we're on mobile with window width less than 576px
+  const isMobile = window.innerWidth <= 576;
+  
   // Category filters
   if (selectedCategories && selectedCategories.length > 0) {
-    const categoryLabels = selectedCategories.map(cat => {
-      const match = NOTIFICATION_CATEGORIES.find(c => c.value === cat);
-      return match ? match.label : cat;
-    });
-    description.push(`Kategooriad: ${categoryLabels.join(', ')}`);
+    if (isMobile && selectedCategories.length > 1) {
+      // For mobile with multiple selections, show abbreviated format
+      description.push(`Kategooriaid: ${selectedCategories.length}`);
+    } else {
+      const categoryLabels = selectedCategories.map(cat => {
+        const match = NOTIFICATION_CATEGORIES.find(c => c.value === cat);
+        return match ? match.label : cat;
+      });
+      description.push(`Kategooriad: ${categoryLabels.join(', ')}`);
+    }
   }
   
   // Priority filters
   if (selectedPriorities && selectedPriorities.length > 0) {
-    const priorityLabels = selectedPriorities.map(pri => {
-      const match = NOTIFICATION_PRIORITIES.find(p => p.value === pri);
-      return match ? match.label : pri;
-    });
-    description.push(`Prioriteedid: ${priorityLabels.join(', ')}`);
+    if (isMobile && selectedPriorities.length > 1) {
+      // For mobile with multiple selections, show abbreviated format
+      description.push(`Prioriteete: ${selectedPriorities.length}`);
+    } else {
+      const priorityLabels = selectedPriorities.map(pri => {
+        const match = NOTIFICATION_PRIORITIES.find(p => p.value === pri);
+        return match ? match.label : pri;
+      });
+      description.push(`Prioriteedid: ${priorityLabels.join(', ')}`);
+    }
   }
   
   // Search term
   if (searchTerm && searchTerm.trim()) {
-    description.push(`Otsing: "${searchTerm.trim()}"`);
+    if (isMobile && searchTerm.trim().length > 10) {
+      // For mobile with long search term, truncate it
+      description.push(`Otsing: "${searchTerm.trim().substring(0, 10)}..."`);
+    } else {
+      description.push(`Otsing: "${searchTerm.trim()}"`);
+    }
   }
   
   return description.join(' | ');

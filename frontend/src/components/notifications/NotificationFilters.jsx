@@ -45,15 +45,17 @@ const NotificationFilters = ({
             <MdClear /> Lähtesta
           </button>
         )}
-        <div className="search-container">
-          <MdSearch className="search-icon" />
-          <input
-            type="text"
-            placeholder="Otsi teateid..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
+        <div className="search-wrapper">
+          <div className="search-container">
+            <MdSearch className="search-icon" />
+            <input
+              type="text"
+              placeholder="Otsi teateid..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
         </div>
         <MultiSelectDropdown
           open={dropdownOpen}

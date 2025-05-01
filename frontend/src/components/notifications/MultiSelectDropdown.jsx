@@ -9,7 +9,7 @@ const MultiSelectDropdown = ({
   buttonLabel,
   dropdownRef
 }) => (
-  <div style={{ position: 'relative', display: 'inline-block' }} ref={dropdownRef}>
+  <div className="dropdown-wrapper" style={{ position: 'relative', display: 'inline-block' }} ref={dropdownRef}>
     <button
       onClick={() => setOpen(!open)}
       className="category-dropdown-btn"

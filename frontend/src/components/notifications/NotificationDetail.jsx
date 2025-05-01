@@ -87,8 +87,8 @@ const NotificationDetail = () => {
       <div className="notification-content">
         <p>{notification.content}</p>
         <div className="notification-meta">
-          <p>Kategooria: {notification.category}</p>
-          <p>Prioriteet: {getPriorityText(notification.priority)}</p>
+          <p>Kategooria: <span className="meta-value">{notification.category}</span></p>
+          <p>Prioriteet: <span className="meta-value">{getPriorityText(notification.priority)}</span></p>
           {user?.role === 'programmijuht' && (
             <p>Sihtgrupid: {formatGroupInfo()}</p>
           )}

@@ -403,4 +403,143 @@ h2 {
 .custom-modal-cancel:hover {
   background: #f7f7fa;
   color: #c0056a;
+}
+
+@media (max-width: 576px) {
+  .header-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .header-section h2 {
+    margin-bottom: 1rem;
+    text-align: center;
+    width: 100%;
+  }
+  
+  .notification-list {
+    padding: 1rem;
+  }
+  
+  /* Mobile styles for notification items */
+  .notification-item {
+    padding: 0.75rem 1rem 0.75rem 0.75rem;
+    margin-bottom: 0.75rem;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .notification-content {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  
+  .notification-actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    margin-top: 0.5rem;
+    width: 100%;
+  }
+  
+  .notification-link h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
+    word-break: break-word;
+    line-height: 1.3;
+  }
+  
+  .excerpt {
+    font-size: 0.85rem;
+    margin: 0.3rem 0;
+    word-break: break-word;
+  }
+  
+  .creator {
+    font-size: 0.75rem;
+  }
+  
+  .favorite-button {
+    padding: 0.3rem;
+    font-size: 1.3rem;
+  }
+  
+  .delete-button, .edit-button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  
+  .admin-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0;
+  }
+  
+  /* Fix for category label on mobile */
+  .category-label {
+    font-size: 0.7rem;
+    padding: 0.2rem 0rem !important;
+    margin-left: 0 !important;
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+    align-self: flex-start;
+  }
+  
+  /* Fix layout on mobile for first row with title and category */
+  .notification-link > div {
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 0.3rem !important;
+    margin-bottom: 0.3rem;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  /* Add some breathing room for the notification detail button */
+  .notification-item[data-priority] {
+    padding-right: 1rem;
+  }
+  
+  /* Modify the button on the notification card */
+  .main-button {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+    margin-left: auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .main-button svg {
+    font-size: 1rem;
+  }
+  
+  /* Fix for any button getting cut off */
+  button, a.button, .edit-button, .delete-button {
+    white-space: nowrap;
+    overflow: visible;
+  }
+}
+
+/* Category label style */
+.category-label {
+  display: inline-block;
+  background: #f5f5f5;
+  color: #e4067e;
+  border-radius: 12px;
+  padding: 0.15em 0.75em;
+  font-size: 0.85em;
+  font-weight: 600;
+  margin-left: 0.25em;
+  text-transform: capitalize;
+  letter-spacing: 0.01em;
 } 
