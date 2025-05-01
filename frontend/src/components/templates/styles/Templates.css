@@ -95,7 +95,7 @@
   margin: 5px 0;
 }
 
-.template-category, .template-priority {
+.template-category, .template-priority, .template-groups {
   color: #666;
   font-size: 14px;
   margin: 5px 0;
@@ -114,6 +114,17 @@
   content: 'Prioriteet: ';
   font-weight: 500;
   margin-right: 5px;
+}
+
+.template-groups::before {
+  content: 'Sihtgrupid: ';
+  font-weight: 500;
+  margin-right: 5px;
+}
+
+.groups-icon {
+  margin-right: 5px;
+  color: #4285f4;
 }
 
 .template-actions {

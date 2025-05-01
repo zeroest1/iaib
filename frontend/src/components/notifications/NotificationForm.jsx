@@ -173,6 +173,11 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
         category: templateData.category || '',
         priority: templateData.priority || 'tavaline'
       });
+      
+      // Set selected groups if the template has them
+      if (templateData.target_groups && templateData.target_groups.length > 0) {
+        setSelectedGroups(templateData.target_groups.map(group => group.id));
+      }
     }
   }, [isEdit, isTemplate, templateData]);
 
@@ -189,6 +194,11 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
       // If the template is loaded successfully
       if (templateFromUrl) {
         console.log('Template from URL loaded successfully:', templateFromUrl);
+        
+        // Set selected groups if the template has them
+        if (templateFromUrl.target_groups && templateFromUrl.target_groups.length > 0) {
+          setSelectedGroups(templateFromUrl.target_groups.map(group => group.id));
+        }
         
         // Check for template variables
         const variables = extractTemplateVariables(templateFromUrl.title, templateFromUrl.content);
@@ -421,7 +431,8 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
           title: formData.title,
           content: formData.content,
           category: formData.category,
-          priority: formData.priority
+          priority: formData.priority,
+          targetGroups: selectedGroups.length > 0 ? selectedGroups : null
         };
         
         if (isEdit) {
@@ -545,10 +556,10 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
           isSubmitting={isSubmitting}
           submitButtonText={getSubmitButtonText()}
           loadingText={getLoadingText()}
-          availableGroups={!isTemplate ? groups : []}
+          availableGroups={groups}
           selectedGroups={selectedGroups}
           handleGroupChange={handleGroupChange}
-          showGroupSelection={!isTemplate}
+          showGroupSelection={true}
         />
       </form>
 

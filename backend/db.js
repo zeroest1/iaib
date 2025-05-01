@@ -80,6 +80,27 @@ const createTables = async () => {
         UNIQUE(notification_id, group_id)
       );
 
+      -- notification_templates table
+      CREATE TABLE IF NOT EXISTS notification_templates (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL,
+        category VARCHAR(50),
+        priority VARCHAR(20),
+        created_by INTEGER REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- template_groups table (many-to-many relationship)
+      CREATE TABLE IF NOT EXISTS template_groups (
+        id SERIAL PRIMARY KEY,
+        template_id INTEGER REFERENCES notification_templates(id) ON DELETE CASCADE,
+        group_id INTEGER REFERENCES groups(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(template_id, group_id)
+      );
+
       -- favorites table
       CREATE TABLE IF NOT EXISTS favorites (
         id SERIAL PRIMARY KEY,

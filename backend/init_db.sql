@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS favorites;
 DROP TABLE IF EXISTS notification_groups;
 DROP TABLE IF EXISTS user_groups;
 DROP TABLE IF EXISTS file_attachments;
+DROP TABLE IF EXISTS template_groups CASCADE;
 DROP TABLE IF EXISTS notification_templates;
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS users;
@@ -57,6 +58,15 @@ CREATE TABLE notification_templates (
   priority VARCHAR(20),
   created_by INTEGER REFERENCES users(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create template_groups table (many-to-many relationship)
+CREATE TABLE template_groups (
+  id SERIAL PRIMARY KEY,
+  template_id INTEGER REFERENCES notification_templates(id) ON DELETE CASCADE,
+  group_id INTEGER REFERENCES groups(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(template_id, group_id)
 );
 
 -- Create notification_groups table (many-to-many relationship)

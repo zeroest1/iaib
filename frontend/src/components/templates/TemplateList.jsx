@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaPlus, FaEdit, FaTrash, FaCopy, FaInfoCircle } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaCopy, FaInfoCircle, FaUsers } from 'react-icons/fa';
 import { 
   useGetTemplatesQuery, 
   useDeleteTemplateMutation,
@@ -77,6 +77,17 @@ const TemplateList = () => {
                 <p className="template-title">{template.title}</p>
                 <p className="template-category">{template.category}</p>
                 <p className="template-priority">{template.priority}</p>
+                {template.target_groups && template.target_groups.length > 0 ? (
+                  <p className="template-groups">
+                    <FaUsers className="groups-icon" />
+                    {template.target_groups.length} sihtgruppi
+                  </p>
+                ) : (
+                  <p className="template-groups">
+                    <FaUsers className="groups-icon" />
+                    Kõik grupid (avalik)
+                  </p>
+                )}
               </div>
               <div className="template-actions">
                 <button 
