@@ -382,7 +382,17 @@ const deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // First check if the notification belongs to this user
+    // First check if the notification exists
+    const notificationExists = await pool.query(
+      'SELECT * FROM notifications WHERE id = $1',
+      [id]
+    );
+    
+    if (notificationExists.rows.length === 0) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+    
+    // Check if the notification belongs to this user
     const notificationCheck = await pool.query(
       'SELECT * FROM notifications WHERE id = $1 AND created_by = $2',
       [id, req.user.id]
@@ -398,6 +408,7 @@ const deleteNotification = async (req, res) => {
     // Delete read status and group associations (cascade delete will handle favorites)
     await pool.query('DELETE FROM notification_read_status WHERE notification_id = $1', [id]);
     await pool.query('DELETE FROM notification_groups WHERE notification_id = $1', [id]);
+    await pool.query('DELETE FROM favorites WHERE notification_id = $1', [id]);
     
     // Then delete the notification
     await pool.query('DELETE FROM notifications WHERE id = $1', [id]);
