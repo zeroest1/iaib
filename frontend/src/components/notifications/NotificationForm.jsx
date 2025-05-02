@@ -65,25 +65,9 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
     skip: skipTemplateDataFetch
   });
 
-  // Add more debugging info to help us trace the template loading issue
-  console.log('NotificationForm component rendering with params:', {
-    isTemplate,
-    isEdit,
-    id,
-    templateIdFromUrl,
-    searchParamsString: searchParams.toString(),
-    searchParams: Object.fromEntries(searchParams.entries())
-  });
-
   // Load template if template ID is in the URL
   const skipTemplateFromUrlFetch = !(!isTemplate && templateIdFromUrl);
   const templateIdInt = templateIdFromUrl ? parseInt(templateIdFromUrl, 10) : 0;
-  
-  console.log('Template query params:', {
-    templateIdFromUrl,
-    templateIdInt,
-    skipTemplateFromUrlFetch
-  });
   
   const { 
     data: templateFromUrl, 
@@ -103,18 +87,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
   const { data: templates = [], isLoading: templatesLoading } = useGetTemplatesQuery(undefined, {
     skip: skipTemplatesFetch
   });
-  
-  // Print debug info for template loading
-  useEffect(() => {
-    if (templateIdFromUrl) {
-      console.log('Loading template from URL:', templateIdFromUrl);
-      console.log('Template loading state:', {
-        loading: templateFromUrlLoading,
-        error: templateFromUrlError,
-        data: templateFromUrl
-      });
-    }
-  }, [templateIdFromUrl, templateFromUrl, templateFromUrlLoading, templateFromUrlError]);
 
   // Function to extract template variables from content
   const extractTemplateVariables = (title, content) => {
@@ -185,15 +157,12 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
     if (!isTemplate && templateIdFromUrl && !templateFromUrlLoading) {
       // If we have an error loading the template, show error message
       if (templateFromUrlError) {
-        console.error('Error loading template from URL:', templateFromUrlError);
         setError('Malliga tekkis probleem. Palun proovi mõnda teist malli või logi välja ja sisse tagasi.');
         return;
       }
       
       // If the template is loaded successfully
       if (templateFromUrl) {
-        console.log('Template from URL loaded successfully:', templateFromUrl);
-        
         // Set selected groups if the template has them
         if (templateFromUrl.target_groups && templateFromUrl.target_groups.length > 0) {
           setSelectedGroups(templateFromUrl.target_groups.map(group => group.id));
@@ -201,7 +170,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
         
         // Check for template variables
         const variables = extractTemplateVariables(templateFromUrl.title, templateFromUrl.content);
-        console.log('Extracted variables:', variables);
         
         if (Object.keys(variables).length > 0) {
           // Store template data and variables
@@ -225,14 +193,11 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
   useEffect(() => {
     // If we're not in template mode but have a template ID in URL and template failed to load
     if (!isTemplate && templateIdFromUrl && templateFromUrlError) {
-      console.log('Template failed to load via URL, trying direct fetch', templateIdFromUrl);
-      
       const fetchTemplate = async () => {
         try {
           // Get token from localStorage
           const token = localStorage.getItem('token');
           if (!token) {
-            console.error('No token available for direct template fetch');
             setError('Autentimise probleem. Palun logi välja ja sisse tagasi.');
             return;
           }
@@ -250,11 +215,9 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
           }
           
           const template = await response.json();
-          console.log('Direct template fetch succeeded:', template);
           
           // Check for template variables
           const variables = extractTemplateVariables(template.title, template.content);
-          console.log('Extracted variables from direct fetch:', variables);
           
           if (Object.keys(variables).length > 0) {
             // Store template data and variables
@@ -271,7 +234,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
             });
           }
         } catch (error) {
-          console.error('Direct template fetch failed:', error);
           setError(`Malliga tekkis probleem: ${error.message}`);
         }
       };
@@ -279,11 +241,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
       fetchTemplate();
     }
   }, [isTemplate, templateIdFromUrl, templateFromUrlError]);
-
-  // Debug: log groups when they change
-  useEffect(() => {
-    console.log('Available groups:', groups);
-  }, [groups]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -294,7 +251,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
   };
 
   const handleGroupChange = (newSelectedGroups) => {
-    console.log('Selected groups changed to:', newSelectedGroups);
     setSelectedGroups(newSelectedGroups);
   };
 
@@ -311,7 +267,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
   // Handle template selection from dropdown
   const handleTemplateSelect = (e) => {
     const newTemplateId = e.target.value;
-    console.log('Template dropdown selection changed to:', newTemplateId);
     
     // Update the selected template ID state
     setSelectedTemplateId(newTemplateId);
@@ -331,16 +286,9 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
     const selectedTemplateId_int = parseInt(newTemplateId, 10);
     const selectedTemplate = templates.find(t => t.id === selectedTemplateId_int);
     
-    console.log('Selected template from dropdown:', {
-      selectedTemplateId, 
-      selectedTemplateId_int,
-      template: selectedTemplate
-    });
-    
     if (selectedTemplate) {
       // Check for template variables
       const variables = extractTemplateVariables(selectedTemplate.title, selectedTemplate.content);
-      console.log('Extracted variables from dropdown:', variables);
       
       if (Object.keys(variables).length > 0) {
         // Store template data and variables
@@ -368,29 +316,21 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
   };
 
   const handleVariableSubmit = () => {
-    console.log('Variable submit button clicked');
-    
     // Get the template data from either URL param or dropdown selection
     let templateSource = null;
     
     if (templateFromUrl) {
       // Template from URL
       templateSource = templateFromUrl;
-      console.log('Using template from URL:', templateSource);
     } else {
       // Template from dropdown
       const templateId = selectedTemplateId;
-      console.log('Looking for template with ID:', templateId);
       
       if (templateId) {
         const selectedTemplate = templates.find(t => t.id === parseInt(templateId, 10));
-        console.log('Found template from dropdown:', selectedTemplate);
         templateSource = selectedTemplate;
       }
     }
-    
-    console.log('Template source for variables:', templateSource);
-    console.log('Variable values to apply:', variableValues);
     
     if (templateSource) {
       // Apply variable values to template
@@ -400,8 +340,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
         variableValues
       );
       
-      console.log('Processed template content:', processedContent);
-      
       // Update form data with processed content
       const newData = {
         title: processedContent.title,
@@ -410,10 +348,9 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
         priority: templateSource.priority || 'tavaline'
       };
       
-      console.log('Setting form data from template with variables:', newData);
       setFormData(newData);
     } else {
-      console.error('No template source found for variable replacement');
+      setError('Malli andmete laadimisel tekkis probleem.');
     }
     
     // Close the modal
@@ -447,7 +384,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
         navigate('/templates');
       } else {
         // Regular notification creation
-        console.log('Submitting notification with groups:', selectedGroups);
         await addNotification({
           title: formData.title,
           content: formData.content,
@@ -459,8 +395,10 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
         navigate('/');
       }
     } catch (err) {
-      setError(isTemplate ? 'Viga malli salvestamisel' : 'Viga teate lisamisel');
-      console.error(err);
+      const errorMessage = err.data?.error || err.message || 'Midagi läks valesti';
+      setError(isTemplate 
+        ? `Viga malli salvestamisel: ${errorMessage}` 
+        : `Viga teate lisamisel: ${errorMessage}`);
     }
   };
 
@@ -487,13 +425,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
     }
     return 'Lisan teadet...';
   };
-
-  // Add user authentication status debugging
-  console.log('User authentication status:', {
-    isAuthenticated: !!user,
-    userId: user?.id,
-    hasToken: !!localStorage.getItem('token')
-  });
 
   return (
     <div className="notification-form">

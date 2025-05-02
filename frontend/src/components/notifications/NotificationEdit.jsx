@@ -29,16 +29,6 @@ const NotificationEdit = () => {
   const { data: notificationGroups = [], isLoading: notificationGroupsLoading } = useGetNotificationGroupsQuery(id);
   const [updateNotification, { isLoading: isUpdating }] = useUpdateNotificationMutation();
 
-  // Debug: log groups when they change
-  useEffect(() => {
-    console.log('Available groups:', groups);
-  }, [groups]);
-
-  // Debug: log notification groups when they change
-  useEffect(() => {
-    console.log('Notification groups:', notificationGroups);
-  }, [notificationGroups]);
-
   // Set initial form data once notification is fetched
   useEffect(() => {
     if (data) {
@@ -55,7 +45,6 @@ const NotificationEdit = () => {
   useEffect(() => {
     if (notificationGroups && notificationGroups.length > 0) {
       const groupIds = notificationGroups.map(group => group.id);
-      console.log('Setting selected groups from notification:', groupIds);
       setSelectedGroups(groupIds);
     }
   }, [notificationGroups]);
@@ -72,14 +61,12 @@ const NotificationEdit = () => {
   };
 
   const handleGroupChange = (newSelectedGroups) => {
-    console.log('Selected groups changed to:', newSelectedGroups);
     setSelectedGroups(newSelectedGroups);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      console.log('Updating notification with groups:', selectedGroups);
       await updateNotification({
         id,
         ...notification,
@@ -87,8 +74,8 @@ const NotificationEdit = () => {
       }).unwrap();
       navigate('/');
     } catch (err) {
-      console.error('Viga teate muutmisel:', err);
-      setError('Viga teate muutmisel');
+      const errorMessage = err.data?.error || err.message || 'Midagi läks valesti';
+      setError(`Viga teate muutmisel: ${errorMessage}`);
     }
   };
 

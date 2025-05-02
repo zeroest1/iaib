@@ -14,13 +14,13 @@ const TemplateList = () => {
   const [deleteTemplate] = useDeleteTemplateMutation();
   const [confirmationModal, setConfirmationModal] = useState({ show: false, templateId: null });
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [errorModal, setErrorModal] = useState({ show: false, message: '' });
 
   const handleDeleteClick = (id) => {
     setConfirmationModal({ show: true, templateId: id });
   };
 
   const handleUseTemplate = (templateId) => {
-    console.log('Using template:', templateId);
     // Navigate programmatically to ensure the parameter is properly passed
     navigate(`/notifications/new?template=${templateId}`);
   };
@@ -31,7 +31,12 @@ const TemplateList = () => {
       setConfirmationModal({ show: false, templateId: null });
       refetch();
     } catch (error) {
-      console.error('Error deleting template:', error);
+      const errorMessage = error.data?.error || error.message || 'Midagi läks valesti';
+      setErrorModal({ 
+        show: true, 
+        message: `Viga malli kustutamisel: ${errorMessage}` 
+      });
+      setConfirmationModal({ show: false, templateId: null });
     }
   };
 
@@ -120,6 +125,16 @@ const TemplateList = () => {
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
         isDelete={true}
+      />
+
+      {/* Error modal */}
+      <ConfirmationModal
+        open={errorModal.show}
+        title="Viga"
+        message={errorModal.message}
+        confirmText="OK"
+        onConfirm={() => setErrorModal({ show: false, message: '' })}
+        onCancel={() => setErrorModal({ show: false, message: '' })}
       />
 
       {/* Template info modal */}

@@ -153,7 +153,8 @@ const NotificationList = ({ filter = 'all', onFavoritesChange, onUnreadChange })
       try {
         await deleteNotification(id).unwrap();
       } catch (err) {
-        console.error('Viga kustutamisel:', err);
+        setModalMessage(`Viga teate kustutamisel: ${err.message || 'Midagi läks valesti'}`);
+        setModalOpen(true);
       }
       setModalOpen(false);
     });
@@ -170,7 +171,8 @@ const NotificationList = ({ filter = 'all', onFavoritesChange, onUnreadChange })
         if (onFavoritesChange) onFavoritesChange();
       }
     } catch (err) {
-      console.error('Viga lemmiku lisamisel/eemaldamisel:', err);
+      setModalMessage(`Viga lemmiku lisamisel/eemaldamisel: ${err.message || 'Midagi läks valesti'}`);
+      setModalOpen(true);
     }
   };
 
@@ -179,7 +181,8 @@ const NotificationList = ({ filter = 'all', onFavoritesChange, onUnreadChange })
       await markAsRead(notificationId).unwrap();
       if (onUnreadChange) onUnreadChange();
     } catch (err) {
-      console.error('Viga teate lugemise märkimisel:', err);
+      setModalMessage(`Viga teate lugemise märkimisel: ${err.message || 'Midagi läks valesti'}`);
+      setModalOpen(true);
     }
   };
 
@@ -324,18 +327,6 @@ const NotificationList = ({ filter = 'all', onFavoritesChange, onUnreadChange })
     allFilteredNotifications, 
     readStatus
   ]);
-
-  // Debug pagination
-  useEffect(() => {
-    if (useClientPagination && allFilteredNotifications.length > 10) {
-      console.log('Client-side pagination enabled:', {
-        totalItems: allFilteredNotifications.length,
-        localPagination,
-        visibleItems: filteredNotifications.length,
-        shouldShowControls: localPagination.totalPages > 1
-      });
-    }
-  }, [useClientPagination, allFilteredNotifications.length, filteredNotifications.length, localPagination]);
 
   // Get filter description using helper function
   const filterDescriptionText = useMemo(() => 

@@ -12,27 +12,10 @@ const axiosBaseQuery =
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       };
       
-      console.log(`API Request: ${method.toUpperCase()} ${baseUrl}${url}`, { 
-        headers: { ...headers, Authorization: token ? 'Bearer [REDACTED]' : undefined },
-        params
-      });
-      
       const result = await axios({ url: `${baseUrl}${url}`, method, data, params, headers });
-      
-      console.log(`API Response: ${method.toUpperCase()} ${baseUrl}${url}`, { 
-        status: result.status, 
-        data: result.data
-      });
       
       return { data: result.data };
     } catch (axiosError) {
-      console.error(`API Error: ${method.toUpperCase()} ${baseUrl}${url}`, { 
-        status: axiosError.response?.status, 
-        data: axiosError.response?.data, 
-        message: axiosError.message,
-        stack: axiosError.stack
-      });
-      
       return {
         error: { 
           status: axiosError.response?.status, 
@@ -118,6 +101,8 @@ export const api = createApi({
             );
           }
         } catch (error) {
+          // Log the error for troubleshooting, but don't disrupt user experience
+          // Error will be handled by the component that called the mutation
           console.error('Error auto-marking notification as read:', error);
         }
       },
