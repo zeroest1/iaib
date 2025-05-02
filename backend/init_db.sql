@@ -3,7 +3,6 @@ DROP TABLE IF EXISTS notification_read_status CASCADE;
 DROP TABLE IF EXISTS favorites;
 DROP TABLE IF EXISTS notification_groups;
 DROP TABLE IF EXISTS user_groups;
-DROP TABLE IF EXISTS file_attachments;
 DROP TABLE IF EXISTS template_groups CASCADE;
 DROP TABLE IF EXISTS notification_templates;
 DROP TABLE IF EXISTS notifications;
