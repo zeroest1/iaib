@@ -10,11 +10,11 @@ router.use(authenticateToken, checkProgramManager);
 // Get all templates for current user
 router.get('/', templateController.getTemplates);
 
-// Get a specific template
-router.get('/:id', templateController.getTemplateById);
-
 // Create a new template
 router.post('/', templateController.createTemplate);
+
+// Get a specific template
+router.get('/:id', templateController.getTemplateById);
 
 // Update a template
 router.put('/:id', templateController.updateTemplate);
