@@ -40,7 +40,7 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
     content: '',
     category: '',
     priority: 'tavaline',
-    name: '' // For templates only
+    name: ''
   });
   const [selectedGroups, setSelectedGroups] = useState([]);
   const [error, setError] = useState('');
@@ -53,19 +53,16 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
   const templateIdFromUrl = searchParams.get('template');
   const { user } = useSelector(state => state.auth);
   
-  // Always call hooks unconditionally, but conditionally use their results
   const { data: groups = [], isLoading: groupsLoading } = useGetGroupsQuery();
   const [addNotification, { isLoading: addNotificationLoading }] = useAddNotificationMutation();
   const [createTemplate, { isLoading: createTemplateLoading }] = useCreateTemplateMutation();
   const [updateTemplate, { isLoading: updateTemplateLoading }] = useUpdateTemplateMutation();
   
-  // Always call the hooks, but skip requests when not needed
   const skipTemplateDataFetch = !(isEdit && isTemplate && id);
   const { data: templateData, isLoading: templateLoading } = useGetTemplateByIdQuery(id || 0, {
     skip: skipTemplateDataFetch
   });
 
-  // Load template if template ID is in the URL
   const skipTemplateFromUrlFetch = !(!isTemplate && templateIdFromUrl);
   const templateIdInt = templateIdFromUrl ? parseInt(templateIdFromUrl, 10) : 0;
   
@@ -77,41 +74,34 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
     templateIdInt, 
     { 
       skip: skipTemplateFromUrlFetch,
-      // Force refetch when switching templates
       refetchOnMountOrArgChange: true
     }
   );
 
-  // Get all templates for template selection dropdown
   const skipTemplatesFetch = isTemplate;
   const { data: templates = [], isLoading: templatesLoading } = useGetTemplatesQuery(undefined, {
     skip: skipTemplatesFetch
   });
 
-  // Function to extract template variables from content
   const extractTemplateVariables = (title, content) => {
     const variableRegex = /{([^{}]+)}/g;
     const variables = new Set();
     
-    // Extract variables from title
     let match;
     if (title) {
       while ((match = variableRegex.exec(title)) !== null) {
         variables.add(match[1]);
       }
       
-      // Reset regex lastIndex
       variableRegex.lastIndex = 0;
     }
     
-    // Extract variables from content
     if (content) {
       while ((match = variableRegex.exec(content)) !== null) {
         variables.add(match[1]);
       }
     }
     
-    // Convert Set to object with empty values
     const variablesObj = {};
     variables.forEach(variable => {
       variablesObj[variable] = '';
@@ -120,7 +110,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
     return variablesObj;
   };
 
-  // Apply variable values to template content
   const applyVariablesToTemplate = (title, content, values) => {
     let newTitle = title || '';
     let newContent = content || '';
@@ -134,7 +123,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
     return { title: newTitle, content: newContent };
   };
 
-  // Set form data from template when editing
   useEffect(() => {
     if (isEdit && isTemplate && templateData) {
       setFormData({
@@ -145,39 +133,31 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
         priority: templateData.priority || 'tavaline'
       });
       
-      // Set selected groups if the template has them
       if (templateData.target_groups && templateData.target_groups.length > 0) {
         setSelectedGroups(templateData.target_groups.map(group => group.id));
       }
     }
   }, [isEdit, isTemplate, templateData]);
 
-  // Set form data when a template is selected from URL parameter
   useEffect(() => {
     if (!isTemplate && templateIdFromUrl && !templateFromUrlLoading) {
-      // If we have an error loading the template, show error message
       if (templateFromUrlError) {
         setError('Malliga tekkis probleem. Palun proovi mõnda teist malli või logi välja ja sisse tagasi.');
         return;
       }
       
-      // If the template is loaded successfully
       if (templateFromUrl) {
-        // Set selected groups if the template has them
         if (templateFromUrl.target_groups && templateFromUrl.target_groups.length > 0) {
           setSelectedGroups(templateFromUrl.target_groups.map(group => group.id));
         }
         
-        // Check for template variables
         const variables = extractTemplateVariables(templateFromUrl.title, templateFromUrl.content);
         
         if (Object.keys(variables).length > 0) {
-          // Store template data and variables
           setTemplateVariables(variables);
           setVariableValues(variables);
           setShowVariableModal(true);
         } else {
-          // No variables, just set the form data directly
           setFormData({
             title: templateFromUrl.title,
             content: templateFromUrl.content,
@@ -189,20 +169,16 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
     }
   }, [isTemplate, templateFromUrl, templateIdFromUrl, templateFromUrlError, templateFromUrlLoading]);
 
-  // Add a special backup method to load template directly
   useEffect(() => {
-    // If we're not in template mode but have a template ID in URL and template failed to load
     if (!isTemplate && templateIdFromUrl && templateFromUrlError) {
       const fetchTemplate = async () => {
         try {
-          // Get token from localStorage
           const token = localStorage.getItem('token');
           if (!token) {
             setError('Autentimise probleem. Palun logi välja ja sisse tagasi.');
             return;
           }
           
-          // Make direct fetch request
           const response = await fetch(`http://localhost:5000/api/templates/${templateIdFromUrl}`, {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -216,16 +192,13 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
           
           const template = await response.json();
           
-          // Check for template variables
           const variables = extractTemplateVariables(template.title, template.content);
           
           if (Object.keys(variables).length > 0) {
-            // Store template data and variables
             setTemplateVariables(variables);
             setVariableValues(variables);
             setShowVariableModal(true);
           } else {
-            // No variables, just set the form data directly
             setFormData({
               title: template.title,
               content: template.content,
@@ -254,25 +227,20 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
     setSelectedGroups(newSelectedGroups);
   };
 
-  // Fix the dropdown value issue
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
 
-  // Set the initial template ID from URL if present  
   useEffect(() => {
     if (templateIdFromUrl) {
       setSelectedTemplateId(templateIdFromUrl);
     }
   }, [templateIdFromUrl]);
 
-  // Handle template selection from dropdown
   const handleTemplateSelect = (e) => {
     const newTemplateId = e.target.value;
     
-    // Update the selected template ID state
     setSelectedTemplateId(newTemplateId);
     
     if (!newTemplateId) {
-      // Reset form if "No template" is selected
       setFormData({
         title: '',
         content: '',
@@ -282,21 +250,17 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
       return;
     }
     
-    // Find the selected template
     const selectedTemplateId_int = parseInt(newTemplateId, 10);
     const selectedTemplate = templates.find(t => t.id === selectedTemplateId_int);
     
     if (selectedTemplate) {
-      // Check for template variables
       const variables = extractTemplateVariables(selectedTemplate.title, selectedTemplate.content);
       
       if (Object.keys(variables).length > 0) {
-        // Store template data and variables
         setTemplateVariables(variables);
         setVariableValues(variables);
         setShowVariableModal(true);
       } else {
-        // No variables, just set the form data directly
         setFormData({
           title: selectedTemplate.title,
           content: selectedTemplate.content,
@@ -316,14 +280,11 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
   };
 
   const handleVariableSubmit = () => {
-    // Get the template data from either URL param or dropdown selection
     let templateSource = null;
     
     if (templateFromUrl) {
-      // Template from URL
       templateSource = templateFromUrl;
     } else {
-      // Template from dropdown
       const templateId = selectedTemplateId;
       
       if (templateId) {
@@ -333,14 +294,12 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
     }
     
     if (templateSource) {
-      // Apply variable values to template
       const processedContent = applyVariablesToTemplate(
         templateSource.title,
         templateSource.content,
         variableValues
       );
       
-      // Update form data with processed content
       const newData = {
         title: processedContent.title,
         content: processedContent.content,
@@ -353,7 +312,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
       setError('Malli andmete laadimisel tekkis probleem.');
     }
     
-    // Close the modal
     setShowVariableModal(false);
   };
 
@@ -361,7 +319,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
     e.preventDefault();
     try {
       if (isTemplate) {
-        // Template creation or update
         const templatePayload = {
           name: formData.name,
           title: formData.title,
@@ -372,18 +329,15 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
         };
         
         if (isEdit) {
-          // Update existing template
           await updateTemplate({
             id,
             ...templatePayload
           }).unwrap();
         } else {
-          // Create new template
           await createTemplate(templatePayload).unwrap();
         }
         navigate('/templates');
       } else {
-        // Regular notification creation
         await addNotification({
           title: formData.title,
           content: formData.content,
@@ -404,7 +358,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
 
   const isSubmitting = addNotificationLoading || createTemplateLoading || updateTemplateLoading || templateLoading || groupsLoading || templateFromUrlLoading || templatesLoading;
 
-  // Determine page title and button text based on mode
   const getPageTitle = () => {
     if (isTemplate) {
       return isEdit ? 'Muuda malli' : 'Lisa uus mall';
@@ -455,7 +408,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
           </div>
         )}
 
-        {/* Template selection dropdown for notifications */}
         {!isTemplate && !isEdit && (
           <div className="form-group">
             <label htmlFor="templateSelect">Vali mall (valikuline)</label>
@@ -493,7 +445,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
         />
       </form>
 
-      {/* Template Variables Modal using the shared component */}
       <ConfirmationModal
         open={showVariableModal}
         title="Täida malli muutujad"
@@ -503,7 +454,6 @@ const NotificationForm = ({ isTemplate = false, isEdit = false }) => {
         onConfirm={handleVariableSubmit}
         onCancel={() => {
           setShowVariableModal(false);
-          // If this is from URL, navigate back to templates
           if (templateIdFromUrl) {
             navigate('/templates');
           }

@@ -1,3 +1,7 @@
+/**
+ * Redux store configuration
+ * Sets up the global state store with API and auth reducers
+ */
 import { configureStore } from '@reduxjs/toolkit';
 import { api } from './services/api';
 import authReducer from './features/authSlice';

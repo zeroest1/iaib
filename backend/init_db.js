@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-// Create pool using either DATABASE_URL or individual connection parameters
+// Initialize database connection pool
 let pool;
 if (process.env.DATABASE_URL) {
   // Use connection string if provided
@@ -23,6 +23,10 @@ if (process.env.DATABASE_URL) {
   console.log('Using individual connection parameters for PostgreSQL in init_db.js');
 }
 
+/**
+ * Initialize database with schema and initial data
+ * Creates tables and inserts default users
+ */
 async function initDatabase() {
   try {
     // Read the SQL file

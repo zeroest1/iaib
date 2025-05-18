@@ -46,47 +46,38 @@ const NotificationList = ({ filter = 'all', onFavoritesChange, onUnreadChange })
     totalPages: 1
   });
   
-  // Get view type from URL
   const showFavoritesOnly = location.pathname === '/favorites';
   const isMyNotifications = location.pathname === '/my-notifications';
 
-  // Update local state when path changes
   useEffect(() => {
-    // Reset to page 1 when changing views
     setCurrentPage(1);
   }, [location.pathname]);
 
-  // Debounce search term to avoid too many API calls
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 300); // 300ms delay
+    }, 300);
     
     return () => {
       clearTimeout(handler);
     };
   }, [searchTerm]);
   
-  // Determine which query to use based on whether we have a search term
   const useSearchQuery = debouncedSearchTerm.trim().length > 0;
   
-  // Determine if we should use server-side pagination or client-side pagination
-  // Use client-side pagination for filtered views (favorites, unread)
   const useClientPagination = showFavoritesOnly || 
                              filter === 'unread' ||
                              selectedCategories.length > 0 ||
                              selectedPriorities.length > 0;
   
-  // RTK Query hooks
   const { data = {}, isLoading: notificationsLoading } = useGetNotificationsQuery(
-    // For client-side pagination, request all items by setting a high limit
     { 
       my: isMyNotifications,
       page: useClientPagination ? 1 : currentPage,
-      limit: useClientPagination ? 100 : 10 // Request more items for client-side pagination
+      limit: useClientPagination ? 100 : 10
     },
     { 
-      pollingInterval: useSearchQuery ? 0 : POLLING_INTERVAL, // Disable polling during search
+      pollingInterval: useSearchQuery ? 0 : POLLING_INTERVAL,
       skip: useSearchQuery
     }
   );
@@ -98,7 +89,7 @@ const NotificationList = ({ filter = 'all', onFavoritesChange, onUnreadChange })
     debouncedSearchTerm ? { 
       query: debouncedSearchTerm, 
       page: useClientPagination ? 1 : currentPage,
-      limit: useClientPagination ? 100 : 10 // Request more items for client-side pagination
+      limit: useClientPagination ? 100 : 10
     } : undefined,
     { skip: !useSearchQuery }
   );
@@ -120,17 +111,14 @@ const NotificationList = ({ filter = 'all', onFavoritesChange, onUnreadChange })
   const [removeFavorite] = useRemoveFavoriteMutation();
   const [markAsRead] = useMarkAsReadMutation();
 
-  // Use search results if we're searching, otherwise use regular notifications
   const currentNotifications = useSearchQuery ? searchResults : notifications;
   const isLoading = useSearchQuery ? searchLoading : notificationsLoading;
 
-  // Calculate read status
   const readStatus = useMemo(() => 
     calculateReadStatus(currentNotifications, readStatusData, readStatusSuccess),
     [currentNotifications, readStatusData, readStatusSuccess]
   );
 
-  // Combine dropdown outside click logic
   useEffect(() => {
     if (!dropdownOpen && !priorityDropdownOpen) return;
     function handleClickOutside(event) {
@@ -186,63 +174,47 @@ const NotificationList = ({ filter = 'all', onFavoritesChange, onUnreadChange })
     }
   };
 
-  // Current pagination - either from server or local
   const currentPagination = useClientPagination 
     ? localPagination 
     : (useSearchQuery ? searchPagination : pagination);
   
-  // Handle page change
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= currentPagination.totalPages) {
       if (useClientPagination) {
-        // For client-side pagination, just update local state
         setLocalPagination(prev => ({ ...prev, page: newPage }));
       } else {
-        // For server-side pagination, fetch new page
         setCurrentPage(newPage);
       }
-      // Scroll to top when changing pages
-      window.scrollTo(0, 0);
     }
   };
 
-  // Memoize filtered notifications
   const allFilteredNotifications = useMemo(() => {
     if (isLoading) return [];
     
     let result = [...currentNotifications];
     
-    // For search results we don't need to filter by path condition as the API already handles that
     if (!useSearchQuery) {
-      // If we're already fetching my notifications from the API, no need to filter again
-      // Otherwise, apply my notifications filter if enabled through path
       if (location.pathname === '/my-notifications') {
         result = result.filter(n => n.created_by === user?.id);
       }
     }
     
-    // Apply favorites filter if enabled via path
     if (location.pathname === '/favorites') {
       result = result.filter(n => favoritesData.some(f => f.notification_id === n.id));
     }
     
-    // Apply unread filter if enabled
     if (filter === 'unread') {
-      // For new users, all notifications are considered unread
       if (!readStatusData || readStatusData.length === 0) {
         // Leave all notifications in the array (they're all unread)
       } else {
-        // Otherwise filter by read status
         result = result.filter(n => readStatus[n.id] === false);
       }
     }
     
-    // Apply priority filters
     if (selectedPriorities.length > 0) {
       result = result.filter(n => selectedPriorities.includes(n.priority));
     }
     
-    // Apply category filters
     if (selectedCategories.length > 0) {
       result = result.filter(n => selectedCategories.includes(n.category));
     }
@@ -262,56 +234,43 @@ const NotificationList = ({ filter = 'all', onFavoritesChange, onUnreadChange })
     useSearchQuery
   ]);
 
-  // Apply client-side pagination if needed
   const filteredNotifications = useMemo(() => {
-    // Update local pagination totals
     if (useClientPagination) {
       const total = allFilteredNotifications.length;
       const totalPages = Math.max(1, Math.ceil(total / 10));
       
-      // Only update if values have changed to prevent re-renders
       if (total !== localPagination.total || totalPages !== localPagination.totalPages) {
         setLocalPagination(prev => ({
           ...prev,
           total,
           totalPages,
-          // Adjust page if the current page is now beyond the max
           page: Math.min(prev.page, totalPages)
         }));
       }
       
-      // Apply client-side pagination
       const startIndex = (localPagination.page - 1) * 10;
       return allFilteredNotifications.slice(startIndex, startIndex + 10);
     }
     
-    // Otherwise use the filtered notifications as-is (server pagination)
     return allFilteredNotifications;
   }, [allFilteredNotifications, useClientPagination, localPagination.page, localPagination.total, localPagination.totalPages]);
 
-  // Calculate filtered unread count for all items (not just current page)
   const totalUnreadCount = useMemo(() => {
-    // For regular view, use the same calculation as the sidebar
     if (!useClientPagination && !useSearchQuery && filter !== 'unread' && 
         !showFavoritesOnly && location.pathname !== '/favorites' && 
         selectedCategories.length === 0 && selectedPriorities.length === 0) {
       
-      // For new users with no readStatusData, all notifications are unread
       const totalNotifications = currentPagination.total || 0;
       if (totalNotifications > 0 && (!readStatusData || readStatusData.length === 0)) {
-        return totalNotifications; // If no read status data, all notifications are unread
+        return totalNotifications;
       }
       
-      // If we have total from pagination metadata but don't have all notifications loaded
       if (totalNotifications > notifications.length && readStatusData && readStatusData.length > 0) {
-        // Calculate the number of notifications that have a read status
         const readNotifications = readStatusData.filter(item => item.read).length;
-        // Unread count is total notifications minus read notifications
         return totalNotifications - readNotifications;
       }
     }
     
-    // For filtered views, calculate based on all filtered items
     return allFilteredNotifications.filter(n => readStatus[n.id] === false).length;
   }, [
     useClientPagination, 
@@ -328,7 +287,6 @@ const NotificationList = ({ filter = 'all', onFavoritesChange, onUnreadChange })
     readStatus
   ]);
 
-  // Get filter description using helper function
   const filterDescriptionText = useMemo(() => 
     getFilterDescription(isMyNotifications, showFavoritesOnly, filter, location.pathname, selectedCategories, selectedPriorities, searchTerm),
     [isMyNotifications, showFavoritesOnly, filter, location.pathname, selectedCategories, selectedPriorities, searchTerm]
@@ -402,11 +360,8 @@ const NotificationList = ({ filter = 'all', onFavoritesChange, onUnreadChange })
           ))}
         </ul>
           
-          {/* Use more reliable condition here to always show pagination when needed */}
           {(useClientPagination ? 
-            // For client-side, show if we have more than 10 total items 
             allFilteredNotifications.length > 10 : 
-            // For server-side, use the server's total pages
             currentPagination.totalPages > 1) && (
             <div className="pagination-controls">
               <button 

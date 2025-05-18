@@ -19,7 +19,6 @@ const NotificationDetail = () => {
   const { data: notification, isLoading, error } = useGetNotificationQuery(id);
   const { data: notificationGroups = [] } = useGetNotificationGroupsQuery(id);
   
-  // Only fetch read status if the user is the creator
   const { data: readStatusData = [], isLoading: readStatusLoading } = 
     useGetNotificationReadStatusQuery(id, {
       skip: !notification || notification?.created_by !== user?.id
@@ -67,7 +66,6 @@ const NotificationDetail = () => {
     return <p className="loading-message">Laen...</p>;
   }
 
-  // Check if the current user is programmijuht and created this notification
   const canEdit = user?.role === 'programmijuht' && user.id === notification.created_by;
   const isCreator = user?.id === notification.created_by;
 
@@ -84,7 +82,6 @@ const NotificationDetail = () => {
           )}
           <p><i>Loodud: {formatDate(notification.created_at)}</i></p>
           
-          {/* Display read status information for the notification creator */}
           {isCreator && (
             <div className="read-status-section">
               <h3><MdOutlineVisibility /> Kes on lugenud:</h3>

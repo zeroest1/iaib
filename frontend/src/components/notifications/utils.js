@@ -11,34 +11,26 @@ export const formatDate = (dateString) => {
   if (!dateString) return '';
   
   try {
-    // Handle different date formats from PostgreSQL
     let date;
     
-    // If it's already a Date object
     if (dateString instanceof Date) {
       date = dateString;
     } 
-    // If it's an ISO string
     else if (typeof dateString === 'string') {
-      // Clean the string (PostgreSQL can return timestamps with 'T' or ' ' separator)
       const cleanDateString = dateString.replace(' ', 'T');
       date = parseISO(cleanDateString);
     } 
-    // If it's a number (timestamp)
     else if (typeof dateString === 'number') {
       date = new Date(dateString);
     } 
-    // Fallback
     else {
       date = new Date(dateString);
     }
     
-    // Check if the date is valid
     if (isNaN(date.getTime())) {
       throw new Error(`Invalid date: ${dateString}`);
     }
     
-    // Use date-fns-tz to format with the Estonian timezone
     return formatInTimeZone(date, 'Europe/Tallinn', 'dd.MM.yyyy, HH:mm:ss', { locale: et });
   } catch (error) {
     console.error('Error formatting date:', error, typeof dateString, dateString);
@@ -50,17 +42,14 @@ export const formatDate = (dateString) => {
  * Calculate read status from server data
  */
 export const calculateReadStatus = (notifications, readStatusData, readStatusSuccess) => {
-  // Create an object where all notifications are marked as unread by default
   const status = {};
   
-  // Mark all notifications as unread by default
   if (notifications && notifications.length > 0) {
     notifications.forEach(notification => {
-      status[notification.id] = false; // Mark all as unread by default
+      status[notification.id] = false;
     });
   }
   
-  // If readStatusData exists and is not empty, update the read status for those notifications
   if (readStatusSuccess && readStatusData && readStatusData.length > 0) {
     readStatusData.forEach(item => {
       status[item.notification_id] = item.read;
@@ -76,12 +65,10 @@ export const calculateReadStatus = (notifications, readStatusData, readStatusSuc
 export const calculateUnreadCount = (notifications, readStatus, notificationsLoading, readStatusData) => {
   if (notificationsLoading) return 0;
   
-  // For new users with no readStatusData, all notifications are unread
   if (notifications.length > 0 && (!readStatusData || readStatusData.length === 0)) {
     return notifications.length;
   }
   
-  // Otherwise count notifications marked as not read in readStatus
   return notifications.filter(n => readStatus[n.id] === false).length;
 };
 
@@ -101,7 +88,6 @@ export const getPageTitle = (isMyNotifications, showFavoritesOnly, filter, pathn
 export const getFilterDescription = (isMyNotifications, showFavoritesOnly, filter, pathname, selectedCategories, selectedPriorities, searchTerm) => {
   let description = [];
   
-  // Base filter
   if (isMyNotifications || pathname === '/my-notifications') {
     description.push('Minu teated');
   } else if (showFavoritesOnly || pathname === '/favorites') {
@@ -112,13 +98,10 @@ export const getFilterDescription = (isMyNotifications, showFavoritesOnly, filte
     description.push('Kõik teated');
   }
   
-  // Check if we're on mobile with window width less than 576px
   const isMobile = window.innerWidth <= 576;
   
-  // Category filters
   if (selectedCategories && selectedCategories.length > 0) {
     if (isMobile && selectedCategories.length > 1) {
-      // For mobile with multiple selections, show abbreviated format
       description.push(`Kategooriaid: ${selectedCategories.length}`);
     } else {
       const categoryLabels = selectedCategories.map(cat => {
@@ -129,10 +112,8 @@ export const getFilterDescription = (isMyNotifications, showFavoritesOnly, filte
     }
   }
   
-  // Priority filters
   if (selectedPriorities && selectedPriorities.length > 0) {
     if (isMobile && selectedPriorities.length > 1) {
-      // For mobile with multiple selections, show abbreviated format
       description.push(`Prioriteete: ${selectedPriorities.length}`);
     } else {
       const priorityLabels = selectedPriorities.map(pri => {
@@ -143,10 +124,8 @@ export const getFilterDescription = (isMyNotifications, showFavoritesOnly, filte
     }
   }
   
-  // Search term
   if (searchTerm && searchTerm.trim()) {
     if (isMobile && searchTerm.trim().length > 10) {
-      // For mobile with long search term, truncate it
       description.push(`Otsing: "${searchTerm.trim().substring(0, 10)}..."`);
     } else {
       description.push(`Otsing: "${searchTerm.trim()}"`);

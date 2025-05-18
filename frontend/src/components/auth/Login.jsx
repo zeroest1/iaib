@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useLoginMutation, useGetMeQuery } from '../../services/api';
 import './styles/Login.css';
 
+/**
+ * Login component for user authentication
+ * Handles form submission and error states
+ * Redirects to home page on successful login
+ */
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,7 +22,7 @@ const Login = () => {
     setError('');
     try {
       await login({ email, password }).unwrap();
-      await refetch(); // Refresh user data after login
+      await refetch();
       navigate('/');
     } catch (err) {
       setError(err.data?.error || 'Login failed');

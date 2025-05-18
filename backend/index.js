@@ -1,4 +1,7 @@
-// backend/index.js
+/**
+ * Main application entry point
+ * Sets up Express server with API routes and middleware
+ */
 const express = require('express');
 const cors = require('cors');
 const notificationRoutes = require('./routes/notifications');
@@ -9,19 +12,21 @@ const path = require('path');
 const { swaggerUi, swaggerSpec } = require('./swagger');
 require('dotenv').config();
 
+// Initialize Express app
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Swagger documentation
+// API documentation endpoint
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// API routes
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/templates', templateRoutes);
 
-// Simple route
+// Health check endpoint
 app.get('/', (req, res) => {
   res.send('Server is running!');
 });

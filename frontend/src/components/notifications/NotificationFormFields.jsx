@@ -16,11 +16,9 @@ const NotificationFormFields = ({
 }) => {
   const [groupSearchTerm, setGroupSearchTerm] = useState('');
   
-  // Separate role groups from regular groups
   const roleGroups = availableGroups ? availableGroups.filter(g => g.is_role_group) : [];
   const regularGroups = availableGroups ? availableGroups.filter(g => !g.is_role_group) : [];
   
-  // Filter groups based on search term
   const filteredRoleGroups = groupSearchTerm 
     ? roleGroups.filter(g => g.name.toLowerCase().includes(groupSearchTerm.toLowerCase()))
     : roleGroups;
@@ -128,7 +126,6 @@ const NotificationFormFields = ({
               <label htmlFor="select-all-groups">Kõik grupid (avalik)</label>
             </div>
             
-            {/* Role groups section */}
             {filteredRoleGroups.length > 0 && (
               <div className="group-section">
                 <h4>Rollipõhised grupid {groupSearchTerm && filteredRoleGroups.length !== roleGroups.length && `(${filteredRoleGroups.length}/${roleGroups.length})`}</h4>
@@ -155,7 +152,6 @@ const NotificationFormFields = ({
               </div>
             )}
             
-            {/* Regular groups section */}
             {filteredRegularGroups.length > 0 && (
               <div className="group-section">
                 <h4>Regulaarsed grupid {groupSearchTerm && filteredRegularGroups.length !== regularGroups.length && `(${filteredRegularGroups.length}/${regularGroups.length})`}</h4>
@@ -198,8 +194,13 @@ const NotificationFormFields = ({
         </div>
       )}
       
-      {error && <p className="error-message">{error}</p>}
-      <button type="submit" className="submit-button" disabled={isSubmitting}>
+      {error && <div className="error-message">{error}</div>}
+      
+      <button 
+        type="submit" 
+        className="submit-button" 
+        disabled={isSubmitting}
+      >
         {isSubmitting ? loadingText : submitButtonText}
       </button>
     </>

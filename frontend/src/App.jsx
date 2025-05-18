@@ -11,6 +11,11 @@ import { useGetMeQuery } from './services/api';
 import TemplateList from './components/templates/TemplateList';
 import './App.css';
 
+/**
+ * Main application component
+ * Sets up routing structure with authentication protection
+ * Defines routes for different user roles
+ */
 function App() {
   // Load user data on app initialization
   useGetMeQuery();
@@ -19,16 +24,18 @@ function App() {
     <Router>
       <div className="app-container">
         <Routes>
+          {/* Public routes */}
           <Route path="/register" element={<AuthPage />} />
           <Route path="/login" element={<AuthPage />} />
+          
+          {/* Protected routes for authenticated users */}
           <Route element={<ProtectedRoute />}>
-            {/* Main notification views - same for both roles */}
             <Route path="/" element={<DashboardLayout><NotificationList /></DashboardLayout>} />
             <Route path="/favorites" element={<DashboardLayout><NotificationList /></DashboardLayout>} />
             <Route path="/notifications/:id" element={<DashboardLayout><NotificationDetail /></DashboardLayout>} />
           </Route>
           
-          {/* Programmijuht specific routes */}
+          {/* Routes restricted to program manager role */}
           <Route element={<RoleProtectedRoute allowedRoles={['programmijuht']} />}>
             <Route path="/my-notifications" element={<DashboardLayout><NotificationList /></DashboardLayout>} />
             <Route path="/add-notification" element={<DashboardLayout><NotificationForm /></DashboardLayout>} />

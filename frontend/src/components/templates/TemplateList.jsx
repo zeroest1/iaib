@@ -21,7 +21,6 @@ const TemplateList = () => {
   };
 
   const handleUseTemplate = (templateId) => {
-    // Navigate programmatically to ensure the parameter is properly passed
     navigate(`/notifications/new?template=${templateId}`);
   };
 
@@ -115,7 +114,6 @@ const TemplateList = () => {
         </div>
       )}
 
-      {/* Delete confirmation modal */}
       <ConfirmationModal
         open={confirmationModal.show}
         title="Kustuta mall"
@@ -127,7 +125,6 @@ const TemplateList = () => {
         isDelete={true}
       />
 
-      {/* Error modal */}
       <ConfirmationModal
         open={errorModal.show}
         title="Viga"
@@ -137,7 +134,6 @@ const TemplateList = () => {
         onCancel={() => setErrorModal({ show: false, message: '' })}
       />
 
-      {/* Template info modal */}
       <ConfirmationModal
         open={showInfoModal}
         title="Mallide muutujate kasutamine"

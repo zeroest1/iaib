@@ -7,7 +7,6 @@ const searchNotifications = async (req, res) => {
   try {
     const { query } = req.query;
     
-    // Pagination parameters with defaults
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
@@ -16,10 +15,8 @@ const searchNotifications = async (req, res) => {
       return res.status(400).json({ error: 'Search query is required' });
     }
     
-    // Check if user is programmijuht
     const isProgramManager = req.user.role === 'programmijuht';
     
-    // First get the user's groups - needed for both roles
     const userGroupResult = await pool.query(`
       SELECT group_id FROM user_groups WHERE user_id = $1
     `, [req.user.id]);
@@ -30,7 +27,6 @@ const searchNotifications = async (req, res) => {
     let totalCount;
     
     if (isProgramManager) {
-      // Get total count for program managers
       const countResult = await pool.query(`
         SELECT COUNT(DISTINCT n.id) as total
         FROM notifications n
@@ -57,10 +53,6 @@ const searchNotifications = async (req, res) => {
       
       totalCount = parseInt(countResult.rows[0].total);
       
-      // Program managers can search in:
-      // 1. Their own created notifications
-      // 2. Public notifications (no group targeting)
-      // 3. Notifications targeted to their groups
       result = await pool.query(`
         SELECT DISTINCT n.*, u.name as creator_name, u.email as creator_email
         FROM notifications n
@@ -87,11 +79,7 @@ const searchNotifications = async (req, res) => {
         LIMIT $4 OFFSET $5
       `, [req.user.id, userGroupIds.length > 0 ? userGroupIds : [null], `%${query}%`, limit, offset]);
     } else {
-      // Regular users can search in:
-      // 1. Notifications targeted to their groups
-      // 2. Public notifications (no group targeting)
       if (userGroupIds.length === 0) {
-        // Get total count for users with no groups
         const countResult = await pool.query(`
           SELECT COUNT(DISTINCT n.id) as total
           FROM notifications n
@@ -110,7 +98,6 @@ const searchNotifications = async (req, res) => {
         
         totalCount = parseInt(countResult.rows[0].total);
         
-        // If user has no groups, only search in public notifications
         result = await pool.query(`
           SELECT DISTINCT n.*, u.name as creator_name, u.email as creator_email
           FROM notifications n
@@ -129,7 +116,6 @@ const searchNotifications = async (req, res) => {
           LIMIT $2 OFFSET $3
         `, [`%${query}%`, limit, offset]);
       } else {
-        // Get total count for users with groups
         const countResult = await pool.query(`
           SELECT COUNT(DISTINCT n.id) as total
           FROM notifications n
@@ -155,7 +141,6 @@ const searchNotifications = async (req, res) => {
         
         totalCount = parseInt(countResult.rows[0].total);
         
-        // Otherwise search in user's groups and public notifications
         result = await pool.query(`
           SELECT DISTINCT n.*, u.name as creator_name, u.email as creator_email
           FROM notifications n
@@ -185,7 +170,6 @@ const searchNotifications = async (req, res) => {
     
     const totalPages = Math.ceil(totalCount / limit);
     
-    // Format dates before sending
     const formattedNotifications = formatNotificationDates(result.rows);
     return res.json({
       notifications: formattedNotifications,

@@ -1,7 +1,7 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
-// Swagger definition
+// Swagger configuration for API documentation
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
@@ -20,7 +20,7 @@ const swaggerOptions = {
       },
     ],
   },
-  // Path to the API docs - now including our separated files
+  // API documentation source files
   apis: [
     './docs/swagger/schemas.js',
     './docs/swagger/auth.js',

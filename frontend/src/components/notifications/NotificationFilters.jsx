@@ -21,12 +21,10 @@ const NotificationFilters = ({
   searchTerm,
   setSearchTerm
 }) => {
-  // Check if any filters are applied
   const hasActiveFilters = searchTerm.trim() !== '' || 
                            selectedCategories.length > 0 || 
                            selectedPriorities.length > 0;
   
-  // Function to reset all filters
   const handleResetFilters = () => {
     setSearchTerm('');
     setSelectedCategories([]);

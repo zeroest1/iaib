@@ -4,7 +4,6 @@ const pool = require('../db');
 // Get all available groups
 const getAllGroups = async (req, res) => {
   try {
-    // Include role-based groups too, show all groups for selection
     const result = await pool.query('SELECT * FROM groups ORDER BY is_role_group DESC, name');
     res.json(result.rows);
   } catch (err) {

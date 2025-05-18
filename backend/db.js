@@ -1,20 +1,21 @@
-// backend/db.js
+/**
+ * Database connection and schema setup
+ * Manages PostgreSQL connection pool and table creation
+ */
 const { Pool } = require('pg');
 require('dotenv').config();
 
 // Set timezone for the database connection
 process.env.PGTZ = 'Europe/Tallinn';
 
-// Create pool using either DATABASE_URL or individual connection parameters
+// Initialize database connection pool
 let pool;
 if (process.env.DATABASE_URL) {
-  // Use connection string if provided
   pool = new Pool({
     connectionString: process.env.DATABASE_URL,
   });
   console.log('Using DATABASE_URL for PostgreSQL connection');
 } else {
-  // Fall back to individual parameters if DATABASE_URL is not provided
   pool = new Pool({
     user: process.env.DB_USER || 'postgres',
     host: process.env.DB_HOST || 'localhost',
@@ -41,7 +42,10 @@ pool.on('connect', (client) => {
   console.log('PostgreSQL timezone set to Europe/Tallinn');
 });
 
-// Create tables if they don't exist
+/**
+ * Creates database tables if they don't exist
+ * Sets up groups, users, notifications, templates, and relationships
+ */
 const createTables = async () => {
   try {
     await pool.query(`

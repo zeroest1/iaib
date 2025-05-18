@@ -12,7 +12,6 @@ const NotificationItem = ({
   onDelete,
   isFavorite
 }) => {
-  // Determine if notification is read - if not in readStatus object, mark as unread
   const isRead = readStatus && readStatus[notification.id] === true;
   const location = useLocation();
   

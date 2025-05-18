@@ -29,7 +29,6 @@ const NotificationEdit = () => {
   const { data: notificationGroups = [], isLoading: notificationGroupsLoading } = useGetNotificationGroupsQuery(id);
   const [updateNotification, { isLoading: isUpdating }] = useUpdateNotificationMutation();
 
-  // Set initial form data once notification is fetched
   useEffect(() => {
     if (data) {
       setNotification({
@@ -41,7 +40,6 @@ const NotificationEdit = () => {
     }
   }, [data]);
 
-  // Set selected groups once notification groups are fetched
   useEffect(() => {
     if (notificationGroups && notificationGroups.length > 0) {
       const groupIds = notificationGroups.map(group => group.id);
@@ -49,7 +47,6 @@ const NotificationEdit = () => {
     }
   }, [notificationGroups]);
 
-  // Check user role and redirect if not authorized
   useEffect(() => {
     if (user && user.role !== 'programmijuht') {
       navigate('/');

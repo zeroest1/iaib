@@ -4,7 +4,6 @@ const { formatNotificationDates } = require('../utils/dateFormatter');
 // Get all templates for a user
 const getTemplates = async (req, res) => {
   try {
-    // Get all templates
     const templatesResult = await pool.query(
       `SELECT * FROM notification_templates 
        WHERE created_by = $1
@@ -14,7 +13,6 @@ const getTemplates = async (req, res) => {
     
     const templates = templatesResult.rows;
     
-    // Get all template groups
     const templateGroups = await pool.query(
       `SELECT tg.template_id, g.id, g.name, g.is_role_group
        FROM template_groups tg
@@ -23,7 +21,6 @@ const getTemplates = async (req, res) => {
       [templates.map(t => t.id)]
     );
     
-    // Group the groups by template_id
     const groupsByTemplate = {};
     templateGroups.rows.forEach(row => {
       if (!groupsByTemplate[row.template_id]) {
@@ -36,7 +33,6 @@ const getTemplates = async (req, res) => {
       });
     });
     
-    // Add groups to each template
     templates.forEach(template => {
       template.target_groups = groupsByTemplate[template.id] || [];
     });
@@ -53,7 +49,6 @@ const getTemplateById = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Get template
     const templateResult = await pool.query(
       `SELECT * FROM notification_templates WHERE id = $1 AND created_by = $2`,
       [id, req.user.id]
@@ -65,7 +60,6 @@ const getTemplateById = async (req, res) => {
     
     const template = templateResult.rows[0];
     
-    // Get template groups
     const groupsResult = await pool.query(
       `SELECT g.id, g.name, g.is_role_group
        FROM template_groups tg
@@ -96,7 +90,6 @@ const createTemplate = async (req, res) => {
       return res.status(400).json({ error: 'Name, title and content are required' });
     }
     
-    // Create template
     const templateResult = await client.query(
       `INSERT INTO notification_templates 
        (name, title, content, category, priority, created_by)
@@ -107,7 +100,6 @@ const createTemplate = async (req, res) => {
     
     const template = templateResult.rows[0];
     
-    // Add target groups if provided
     if (targetGroups && targetGroups.length > 0) {
       const insertGroupValues = targetGroups.map((groupId, index) => 
         `($1, $${index + 2})`
@@ -118,7 +110,6 @@ const createTemplate = async (req, res) => {
         [template.id, ...targetGroups]
       );
       
-      // Get inserted groups
       const groupsResult = await client.query(
         `SELECT g.id, g.name, g.is_role_group
          FROM template_groups tg
@@ -154,7 +145,6 @@ const updateTemplate = async (req, res) => {
     const { id } = req.params;
     const { name, title, content, category, priority, targetGroups } = req.body;
     
-    // Check if template exists and belongs to user
     const checkResult = await client.query(
       `SELECT * FROM notification_templates WHERE id = $1 AND created_by = $2`,
       [id, req.user.id]
@@ -164,7 +154,6 @@ const updateTemplate = async (req, res) => {
       return res.status(404).json({ error: 'Template not found or you are not authorized' });
     }
     
-    // Update template
     const templateResult = await client.query(
       `UPDATE notification_templates 
        SET name = $1, title = $2, content = $3, category = $4, priority = $5
@@ -175,13 +164,11 @@ const updateTemplate = async (req, res) => {
     
     const template = templateResult.rows[0];
     
-    // Remove existing groups
     await client.query(
       `DELETE FROM template_groups WHERE template_id = $1`,
       [id]
     );
     
-    // Add new target groups if provided
     if (targetGroups && targetGroups.length > 0) {
       const insertGroupValues = targetGroups.map((groupId, index) => 
         `($1, $${index + 2})`
@@ -192,7 +179,6 @@ const updateTemplate = async (req, res) => {
         [template.id, ...targetGroups]
       );
       
-      // Get inserted groups
       const groupsResult = await client.query(
         `SELECT g.id, g.name, g.is_role_group
          FROM template_groups tg

@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useRegisterMutation, useLoginMutation, useGetMeQuery, useGetRegistrationGroupsQuery } from '../../services/api';
 import './styles/Register.css';
 
+/**
+ * Registration component for new user signup
+ * Handles user registration with role selection and group assignment
+ * Automatically logs in user after successful registration
+ */
 const Register = () => {
   const [form, setForm] = useState({
     name: '',
@@ -19,7 +24,6 @@ const Register = () => {
   const { refetch } = useGetMeQuery();
   const { data: groups = [], isLoading: groupsLoading } = useGetRegistrationGroupsQuery();
 
-  // No need to filter groups anymore as we're only getting non-role groups from the API
   const regularGroups = groups;
 
   const handleChange = (e) => {
@@ -41,15 +45,13 @@ const Register = () => {
     e.preventDefault();
     setError('');
     try {
-      // Include selected groups in registration data
       await register({
         ...form,
         groups: selectedGroups.length > 0 ? selectedGroups : []
       }).unwrap();
       
-      // After registration, login automatically
       await login({ email: form.email, password: form.password }).unwrap();
-      await refetch(); // Refresh user data after login
+      await refetch();
       navigate('/');
     } catch (err) {
       setError(err.data?.error || 'Registration failed');
@@ -106,7 +108,6 @@ const Register = () => {
           </select>
         </div>
 
-        {/* Group selection */}
         <div className="form-group">
           <label>Grupid</label>
           <div className="groups-container">
