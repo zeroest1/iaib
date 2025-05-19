@@ -46,6 +46,10 @@
     ]
   },
   "devDependencies": {
+    "@babel/core": "^7.27.1",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
+    "babel-jest": "^29.7.0",
     "identity-obj-proxy": "^3.0.0",
     "msw": "^2.7.5",
     "node-polyfill-webpack-plugin": "^4.1.0",

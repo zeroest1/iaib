@@ -1,36 +1,21 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import Register from '../../components/auth/Register';
 
+// Mock navigate
+const mockNavigate = jest.fn();
+
+// Use the global mock for react-router-dom but override useNavigate
+jest.mock('react-router-dom', () => {
+  const originalModule = jest.requireActual('../../__mocks__/react-router-dom');
+  return {
+    ...originalModule,
+    useNavigate: () => mockNavigate
+  };
+});
+
 // Mock the RTK Query hooks
-jest.mock('../../services/api', () => ({
-  useRegisterMutation: jest.fn(() => [
-    jest.fn().mockImplementation((userData) => {
-      // Simulate registration success or failure based on email
-      if (userData.email === 'taken@example.com') {
-        return Promise.reject({ data: { error: 'Email already in use' } });
-      }
-      return Promise.resolve({ id: 1, ...userData });
-    }),
-    { isLoading: false }
-  ]),
-  useLoginMutation: jest.fn(() => [
-    jest.fn().mockResolvedValue({ token: 'fake-token' }),
-    { isLoading: false }
-  ]),
-  useGetMeQuery: jest.fn(() => ({
-    refetch: jest.fn().mockResolvedValue({ data: { id: 1, name: 'Test User', email: 'test@example.com' } })
-  })),
-  useGetRegistrationGroupsQuery: jest.fn(() => ({
-    data: [
-      { id: 1, name: 'Group 1', description: 'Description 1' },
-      { id: 2, name: 'Group 2', description: 'Description 2' }
-    ],
-    isLoading: false
-  }))
-}));
+jest.mock('../../services/api');
 
 describe('Register Component', () => {
   beforeEach(() => {
@@ -38,12 +23,12 @@ describe('Register Component', () => {
     jest.clearAllMocks();
   });
   
-  test('renders registration form correctly', () => {
-    render(
-      <BrowserRouter>
-        <Register />
-      </BrowserRouter>
-    );
+  afterEach(() => {
+    cleanup();
+  });
+  
+  test('renders registration form with all fields and groups', () => {
+    render(<Register />);
     
     // Check for form elements
     expect(screen.getByLabelText(/nimi/i)).toBeInTheDocument();
@@ -53,153 +38,162 @@ describe('Register Component', () => {
     expect(screen.getByText(/grupid/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /registreeru/i })).toBeInTheDocument();
     
-    // Check for group checkboxes
-    expect(screen.getByText(/group 1/i)).toBeInTheDocument();
-    expect(screen.getByText(/group 2/i)).toBeInTheDocument();
+    // Check that groups are rendered
+    expect(screen.getByText('Group 1')).toBeInTheDocument();
+    expect(screen.getByText('Group 2')).toBeInTheDocument();
+    expect(screen.getByText('First group', { exact: false })).toBeInTheDocument();
+    expect(screen.getByText('Second group', { exact: false })).toBeInTheDocument();
   });
   
-  test('handles input changes', async () => {
-    render(
-      <BrowserRouter>
-        <Register />
-      </BrowserRouter>
-    );
+  test('handles input changes correctly for text fields', () => {
+    render(<Register />);
     
-    const nameInput = screen.getByLabelText(/nimi/i);
-    const emailInput = screen.getByLabelText(/email/i);
-    const passwordInput = screen.getByLabelText(/parool/i);
-    const roleSelect = screen.getByLabelText(/roll/i);
+    // Fill the text fields
+    fireEvent.change(screen.getByLabelText(/nimi/i), { target: { value: 'Test User' } });
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'test@example.com' } });
+    fireEvent.change(screen.getByLabelText(/parool/i), { target: { value: 'password123' } });
     
-    // Simulate user typing
-    await userEvent.type(nameInput, 'John Doe');
-    await userEvent.type(emailInput, 'john@example.com');
-    await userEvent.type(passwordInput, 'password123');
-    await userEvent.selectOptions(roleSelect, 'programmijuht');
-    
-    expect(nameInput.value).toBe('John Doe');
-    expect(emailInput.value).toBe('john@example.com');
-    expect(passwordInput.value).toBe('password123');
-    expect(roleSelect.value).toBe('programmijuht');
+    // Check the values
+    expect(screen.getByLabelText(/nimi/i)).toHaveValue('Test User');
+    expect(screen.getByLabelText(/email/i)).toHaveValue('test@example.com');
+    expect(screen.getByLabelText(/parool/i)).toHaveValue('password123');
   });
   
-  test('handles group selection', async () => {
-    render(
-      <BrowserRouter>
-        <Register />
-      </BrowserRouter>
-    );
+  test('handles role selection changes', () => {
+    render(<Register />);
     
-    // Get the group checkboxes
-    const group1Checkbox = screen.getByLabelText(/group 1/i);
-    const group2Checkbox = screen.getByLabelText(/group 2/i);
+    // Default role should be "tudeng"
+    expect(screen.getByLabelText(/roll/i)).toHaveValue('tudeng');
     
-    // Select the first group
-    await userEvent.click(group1Checkbox);
-    expect(group1Checkbox).toBeChecked();
-    expect(group2Checkbox).not.toBeChecked();
+    // Change role to "programmijuht"
+    fireEvent.change(screen.getByLabelText(/roll/i), { target: { value: 'programmijuht' } });
     
-    // Select the second group as well
-    await userEvent.click(group2Checkbox);
-    expect(group1Checkbox).toBeChecked();
-    expect(group2Checkbox).toBeChecked();
-    
-    // Unselect the first group
-    await userEvent.click(group1Checkbox);
-    expect(group1Checkbox).not.toBeChecked();
-    expect(group2Checkbox).toBeChecked();
+    // Check that role changed
+    expect(screen.getByLabelText(/roll/i)).toHaveValue('programmijuht');
   });
   
-  test('submits form with valid data and navigates to home', async () => {
-    render(
-      <BrowserRouter>
-        <Register />
-      </BrowserRouter>
-    );
+  test('handles group selection with checkboxes', () => {
+    render(<Register />);
     
-    // Fill the form
-    await userEvent.type(screen.getByLabelText(/nimi/i), 'John Doe');
-    await userEvent.type(screen.getByLabelText(/email/i), 'john@example.com');
-    await userEvent.type(screen.getByLabelText(/parool/i), 'password123');
-    await userEvent.selectOptions(screen.getByLabelText(/roll/i), 'tudeng');
+    // Initially no groups are selected
+    const checkbox1 = screen.getByLabelText(/Group 1/);
+    const checkbox2 = screen.getByLabelText(/Group 2/);
     
-    // Select a group
-    await userEvent.click(screen.getByLabelText(/group 1/i));
+    expect(checkbox1).not.toBeChecked();
+    expect(checkbox2).not.toBeChecked();
     
-    // Submit the form
-    fireEvent.click(screen.getByRole('button', { name: /registreeru/i }));
+    // Select Group 1
+    fireEvent.click(checkbox1);
+    expect(checkbox1).toBeChecked();
+    expect(checkbox2).not.toBeChecked();
     
-    // Wait for navigation to be called
-    await waitFor(() => {
-      expect(global.mockNavigate).toHaveBeenCalledWith('/');
-    });
+    // Select Group 2 as well
+    fireEvent.click(checkbox2);
+    expect(checkbox1).toBeChecked();
+    expect(checkbox2).toBeChecked();
+    
+    // Unselect Group 1
+    fireEvent.click(checkbox1);
+    expect(checkbox1).not.toBeChecked();
+    expect(checkbox2).toBeChecked();
   });
   
-  test('shows error message when registration fails', async () => {
-    render(
-      <BrowserRouter>
-        <Register />
-      </BrowserRouter>
-    );
-    
-    // Fill the form with an email that will fail (see mock)
-    await userEvent.type(screen.getByLabelText(/nimi/i), 'John Doe');
-    await userEvent.type(screen.getByLabelText(/email/i), 'taken@example.com');
-    await userEvent.type(screen.getByLabelText(/parool/i), 'password123');
-    
-    // Submit the form
-    fireEvent.click(screen.getByRole('button', { name: /registreeru/i }));
-    
-    // Check for error message
-    await waitFor(() => {
-      expect(screen.getByText(/email already in use/i)).toBeInTheDocument();
-    });
-    
-    // Verify navigate was not called
-    expect(global.mockNavigate).not.toHaveBeenCalled();
-  });
-  
-  test('displays loading state during registration', async () => {
-    // Override the mock for this test
-    const originalModule = jest.requireMock('../../services/api');
-    originalModule.useRegisterMutation.mockReturnValueOnce([
-      jest.fn().mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100))),
-      { isLoading: true }
-    ]);
-    
-    render(
-      <BrowserRouter>
-        <Register />
-      </BrowserRouter>
-    );
-    
-    // Fill the form and submit
-    await userEvent.type(screen.getByLabelText(/nimi/i), 'John Doe');
-    await userEvent.type(screen.getByLabelText(/email/i), 'john@example.com');
-    await userEvent.type(screen.getByLabelText(/parool/i), 'password123');
-    
-    fireEvent.click(screen.getByRole('button', { name: /registreeru/i }));
-    
-    // Just verify the form submission behavior as the loading state is hard to test
-    await waitFor(() => {
-      expect(screen.getByRole('button')).toBeInTheDocument();
-    });
-  });
-  
-  test('displays loading state while fetching groups', () => {
-    // Override the mock for this test
-    const originalModule = jest.requireMock('../../services/api');
-    originalModule.useGetRegistrationGroupsQuery.mockReturnValueOnce({
-      data: [],
+  test('shows loading indicator when fetching groups', () => {
+    // Mock loading state for groups
+    const { useGetRegistrationGroupsQuery } = require('../../services/api');
+    useGetRegistrationGroupsQuery.mockReturnValueOnce({
+      data: undefined,
       isLoading: true
     });
     
-    render(
-      <BrowserRouter>
-        <Register />
-      </BrowserRouter>
-    );
+    render(<Register />);
     
-    // Should show loading message for groups
+    // Check that loading message is displayed
     expect(screen.getByText(/laen gruppe/i)).toBeInTheDocument();
+  });
+  
+  test('shows empty message when no groups are found', () => {
+    // Mock empty groups
+    const { useGetRegistrationGroupsQuery } = require('../../services/api');
+    useGetRegistrationGroupsQuery.mockReturnValueOnce({
+      data: [],
+      isLoading: false
+    });
+    
+    render(<Register />);
+    
+    // Check that empty message is displayed
+    expect(screen.getByText(/gruppe ei leitud/i)).toBeInTheDocument();
+  });
+  
+  test('submits form with all data and navigates to home after registration', async () => {
+    // Get the mocked functions
+    const { useRegisterMutation, useLoginMutation } = require('../../services/api');
+    const [register] = useRegisterMutation();
+    const [login] = useLoginMutation();
+    
+    render(<Register />);
+    
+    // Fill the form
+    fireEvent.change(screen.getByLabelText(/nimi/i), { target: { value: 'Test User' } });
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'test@example.com' } });
+    fireEvent.change(screen.getByLabelText(/parool/i), { target: { value: 'password123' } });
+    
+    // Select groups
+    fireEvent.click(screen.getByLabelText(/Group 1/));
+    
+    // Submit the form by clicking the button
+    fireEvent.click(screen.getByRole('button', { name: /registreeru/i }));
+    
+    // Check that register was called with the right data
+    await waitFor(() => {
+      expect(register).toHaveBeenCalled();
+    });
+    
+    // After successful registration, login should be called
+    await waitFor(() => {
+      expect(login).toHaveBeenCalled();
+    });
+    
+    // After login, it should fetch user data and navigate home
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+  });
+  
+  test('displays error message when registration fails', async () => {
+    // Get the mocked register function and override it for this test
+    const { useRegisterMutation } = require('../../services/api');
+    const [register] = useRegisterMutation();
+    
+    // Override the unwrap implementation for this test
+    register.mockReturnValueOnce({
+      unwrap: () => Promise.reject({ data: { error: 'Registration failed' } })
+    });
+    
+    render(<Register />);
+    
+    // Fill the form
+    fireEvent.change(screen.getByLabelText(/nimi/i), { target: { value: 'Test User' } });
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'existing@example.com' } });
+    fireEvent.change(screen.getByLabelText(/parool/i), { target: { value: 'password123' } });
+    
+    // Submit the form by clicking the button
+    fireEvent.click(screen.getByRole('button', { name: /registreeru/i }));
+    
+    // Check that error message is displayed - use the exact error message from component
+    await waitFor(() => {
+      expect(screen.getByText(/registration failed/i)).toBeInTheDocument();
+    });
+    
+    // Verify that register was called but login was not
+    expect(register).toHaveBeenCalled();
+    
+    // Get the mocked login function
+    const { useLoginMutation } = require('../../services/api');
+    const [login] = useLoginMutation();
+    
+    // Login should not be called
+    expect(login).not.toHaveBeenCalled();
   });
 }); 

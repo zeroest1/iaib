@@ -1,7 +1,12 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
 import AuthPage from '../../components/auth/AuthPage';
+
+// Use the global mock for react-router-dom
+jest.mock('react-router-dom', () => {
+  const originalModule = jest.requireActual('../../__mocks__/react-router-dom');
+  return originalModule;
+});
 
 // Mock the child components
 jest.mock('../../components/auth/Login', () => {
@@ -18,11 +23,7 @@ jest.mock('../../components/auth/Register', () => {
 
 describe('AuthPage Component', () => {
   test('renders login form by default', () => {
-    render(
-      <BrowserRouter>
-        <AuthPage />
-      </BrowserRouter>
-    );
+    render(<AuthPage />);
     
     // Check tabs exist
     expect(screen.getByText(/logi sisse/i)).toBeInTheDocument();
@@ -40,11 +41,7 @@ describe('AuthPage Component', () => {
   });
   
   test('switches to register tab when clicked', () => {
-    render(
-      <BrowserRouter>
-        <AuthPage />
-      </BrowserRouter>
-    );
+    render(<AuthPage />);
     
     // Initially login tab is active
     expect(screen.getByTestId('login-component')).toBeInTheDocument();
@@ -62,13 +59,9 @@ describe('AuthPage Component', () => {
     // Login component should not be visible
     expect(screen.queryByTestId('login-component')).not.toBeInTheDocument();
   });
-  
+
   test('switches back to login tab when clicked', () => {
-    render(
-      <BrowserRouter>
-        <AuthPage />
-      </BrowserRouter>
-    );
+    render(<AuthPage />);
     
     // Switch to register tab first
     fireEvent.click(screen.getByText(/registreeru/i));
