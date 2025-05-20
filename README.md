@@ -26,3 +26,7 @@ The goal of the project is to create a personalized and centralized communicatio
 - **Database**: PostgreSQL
 - **Testing**: Jest, Supertest, React Testing Library, MSW
 - **API Docs**: Swagger UI
+  
+## 📄 License
+
+This project was developed as part of a bachelor thesis at [TalTech](https://taltech.ee/) and is intended for academic and demonstration purposes.
